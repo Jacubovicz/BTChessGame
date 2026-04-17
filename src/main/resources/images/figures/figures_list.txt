@@ -1,0 +1,12 @@
+dark_bishop.png
+dark_king.png
+dark_knight.png
+dark_pawn.png
+dark_queen.png
+dark_rook.png
+white_bishop.png
+white_king.png
+white_knight.png
+white_pawn.png
+white_queen.png
+white_rook.png

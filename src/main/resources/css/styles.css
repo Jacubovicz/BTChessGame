@@ -1,0 +1,49 @@
+.stack-pane {
+	-fx-background-image: url("../images/bg.png");
+	-fx-background-color: #ff5000;
+	-fx-background-size: cover;
+    	-fx-background-repeat: no-repeat;
+    	-fx-background-position: center;
+}
+
+.anchor-pane { -fx-border-color: yellow; -fx-border-width: 3; }
+
+#darkSquare {
+	-fx-background-image: url("../images/dark.png");
+	-fx-background-size: cover;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+}
+
+#lightSquare {
+	-fx-background-image: url("../images/light.png");
+	-fx-background-size: cover;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+}
+
+#chessBoard {
+	
+	-fx-border-image-source: url("../images/light.png");
+	-fx-border-image-slice: 20;
+	-fx-border-image-width: 10;
+	-fx-border-repeat: stretch;
+	
+}
+
+#numberBoxChessBoard {
+	-fx-background-image: url("../images/dark.png");
+	-fx-border-width: 2px;
+	-fx-border-color: #FF9644;
+}
+
+
+.button{
+	-fx-background-color: ff9644;
+	-fx-background-radius: 20px;
+	
+}
+
+.button:hover{
+	-fx-background-color: EBE134;
+}

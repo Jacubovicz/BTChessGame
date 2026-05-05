@@ -6,6 +6,7 @@ import org.portfolio.benttchessgame.chessengine.listeners.TimeChangeListener;
 import org.portfolio.benttchessgame.chessengine.listeners.TurnChangedListener;
 import org.portfolio.benttchessgame.chessengine.players.Player;
 import org.portfolio.benttchessgame.figures.Figure;
+import org.portfolio.benttchessgame.figures.Pawn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +73,7 @@ public class Game {
                     for(int i = 0; i < 10000; i++)
                     {
                         Thread.sleep(1000);
-                        time = String.valueOf(i);
+                        time = formatTime(i);
                         System.out.print(time + " ");
                         notifyTimerListeners();
                     }
@@ -86,6 +87,25 @@ public class Game {
 
         setTurn(true);
     }
+
+    public String formatTime(int t)
+    {
+        StringBuilder str = new StringBuilder();
+
+        int amountOfMins = t/60;
+
+        if(amountOfMins>=1)
+        {
+
+            str.append(amountOfMins).append(" : ");
+
+        }
+        str.append(t - amountOfMins * 60);
+
+
+        return str.toString();
+    }
+
 
     public void setTurn(boolean turn)
     {
@@ -160,6 +180,7 @@ public class Game {
         if(board[from.getRow()][from.getCol()] != null)
         {
                 Figure f= currentBoard.getBoard()[from.getRow()][from.getCol()];
+                if(f instanceof Pawn p) p.disableFirstMove(); //This is special case for the Pawn.
                 currentBoard.getBoard()[from.getRow()][from.getCol()] = null;
                 currentBoard.getBoard()[to.getRow()][to.getCol()] = f;
 

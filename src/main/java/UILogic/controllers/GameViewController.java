@@ -14,7 +14,10 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import org.portfolio.benttchessgame.chessengine.Cell;
 import org.portfolio.benttchessgame.chessengine.ChessEngine;
+import org.portfolio.benttchessgame.chessengine.ChessEngineRunner;
 import org.portfolio.benttchessgame.chessengine.MoveOperation;
+import org.portfolio.benttchessgame.chessengine.commands.MakeMove;
+import org.portfolio.benttchessgame.chessengine.commands.ProposeMove;
 import org.portfolio.benttchessgame.figures.Figure;
 
 import java.io.BufferedReader;
@@ -29,23 +32,24 @@ public class GameViewController {
 
     public Map<String, Image> pieces = new HashMap<>();
 
+    ChessEngineRunner engineRunner;
     ChessEngine engine;
     Painter painter;
 
-
+    MoveOperation operation = new MoveOperation();
     Cell moveFrom, moveTo;
 
     @FXML
     GridPane chessBoard;
 
     @FXML
-    Label timer;
+    Label timer, playerOne, playerTwo;
 
 
     boolean turn = true; // true - white, false - dark
 
     StackPane[][] gameBoard; //this is the physical grid with options of figure placement
-    boolean[][] clickableFields;
+  //  boolean[][] clickableFields;
 
 
     @FXML
@@ -63,6 +67,7 @@ public class GameViewController {
 
     private void updateTheBoard(Figure[][] fig)
     {
+
         for(int i = 0; i < fig.length; i++)
         {
             for(int j = 0; j < fig.length; j++)
@@ -81,8 +86,6 @@ public class GameViewController {
 
             }
         }
-
-
     }
 
     //The process of preloading all the figures
@@ -143,31 +146,26 @@ public class GameViewController {
 
     public void proposeMove(StackPane sp, int row, int col)
     {
-        if(painter.isInAvailableMoves(row,col))
+        if(operation.getInitCell() == null || !painter.isInAvailableMoves(row, col))
         {
-            moveTo = new Cell(row,col);
-            engine.moveTheFigure(new MoveOperation(moveFrom, moveTo));
-
-            painter.removePaint(); //marking the avlMoves fields back to black;
-            painter.paint(Painter.Styles.CLICKED_MOVED_STYLE, row, col); // paints clicked grid element
+            painter.removeAvlMvsPaint();
+            painter.cleanTheBuffer();
+            operation.clear();
+            operation.setInitCell(new Cell(row, col));
+            painter.addToCleanupBuffer(operation.getInitCell());
+            engineRunner.post(new ProposeMove(row, col));
+            System.out.println("Init cell obtained");
             return;
         }
-
-        System.out.print("\nClicked: (" + row + ", " + col + ")");
-
-        if(moveFrom != null)
+        if(operation.getInitCell() != null && operation.getDestCell() == null  && painter.isInAvailableMoves(row, col))
         {
-            painter.paint(Painter.Styles.NO_STYLE, moveFrom.getRow(), moveFrom.getCol());
-            painter.removePaint();
-            if(moveTo != null)
-            {
-                painter.paint(Painter.Styles.NO_STYLE, moveTo.getRow(), moveTo.getCol());
-            }
+            operation.setDestCell(new Cell(row, col));
+            painter.addToCleanupBuffer(operation.getDestCell());
+            engineRunner.post(new MakeMove(operation));
+            painter.removeAvlMvsPaint();
+            painter.paintClickedOrMoved(row, col);
+            System.out.println("Dest cell obtained");
         }
-
-        painter.paint(Painter.Styles.CLICKED_MOVED_STYLE, row, col);
-        moveFrom = new Cell(row,col);
-        engine.proposeMove(moveFrom.getRow(), moveFrom.getCol());
     }
 
     public void setChessEngine(ChessEngine engine) {
@@ -180,6 +178,12 @@ public class GameViewController {
         updateTheBoard(engine.getCurrentGame().getSnapshot());
         activateTheFields(engine.getCurrentGame().getStarterMoves());
         wireListeners();
+    }
+
+    public void setChessEngineRunner(ChessEngineRunner engineRunner)
+    {
+        this.engineRunner = engineRunner;
+        setChessEngine(engineRunner.getEngine());
     }
 
     public void activateTheFields(boolean[][] starterMoves)
@@ -195,11 +199,12 @@ public class GameViewController {
                 }
             }
         }
+
     }
 
     public void wireListeners()
     {
-        engine.getValidator().addAvlMovesChangedListener(avlMoves -> Platform.runLater(()-> painter.paint(Painter.Styles.AVL_STYLE, avlMoves)));
+        engine.getValidator().addAvlMovesChangedListener(avlMoves -> Platform.runLater(()-> painter.paintAvlMoves(avlMoves)));
         engine.getCurrentGame().addTimeChangeListener((time) -> Platform.runLater(() -> timer.setText(time)));
         engine.getCurrentGame().addStarterMovesAvailableListener((clickableFields) -> Platform.runLater(() -> activateTheFields(clickableFields)));
         engine.getCurrentGame().addTurnListener(this::setTurn);

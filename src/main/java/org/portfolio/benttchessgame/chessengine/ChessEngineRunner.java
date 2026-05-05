@@ -2,6 +2,8 @@ package org.portfolio.benttchessgame.chessengine;
 
 
 import org.portfolio.benttchessgame.chessengine.commands.EngineCommand;
+import org.portfolio.benttchessgame.chessengine.commands.MakeMove;
+import org.portfolio.benttchessgame.chessengine.commands.ProposeMove;
 import org.portfolio.benttchessgame.chessengine.commands.StartNewGame;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -18,6 +20,11 @@ public class ChessEngineRunner implements Runnable{
        this.engine = new ChessEngine();
    }
 
+   public ChessEngine getEngine()
+   {
+       return this.engine;
+   }
+
    public void post(EngineCommand command)
    {
        this.commands.offer(command);
@@ -28,15 +35,23 @@ public class ChessEngineRunner implements Runnable{
 
        while(running)
        {
+
            if(!commands.isEmpty())
            {
                EngineCommand command = commands.poll();
 
-               if(command instanceof StartNewGame)
+               if(command instanceof StartNewGame ng)
                {
-                   engine.setTheNewGame(((StartNewGame) command).getPlayerOne(),
-                           ((StartNewGame) command).getPlayerTwo());
+                   engine.setTheNewGame(ng.getPlayerOne(), ng.getPlayerTwo());
 
+               }
+               else if(command instanceof ProposeMove p)
+               {
+                   engine.proposeMove(p.getRow(), p.getCol());
+               }
+               else if(command instanceof MakeMove m)
+               {
+                   engine.moveTheFigure(m.getMoveOperation());
                }
 
 

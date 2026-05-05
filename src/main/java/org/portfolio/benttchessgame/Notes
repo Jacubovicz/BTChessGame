@@ -1,7 +1,6 @@
-The ChessEngine returns null getCurrentGame object
-    - need to create board in GameViewController
-    - write a method to update it
-    - and the listener
+Create more commands for the ChessEngineRunner.
 
-Then
-    refactor the code when the updating works
+also:
+  -> write the proper timer
+  -> write the player underline and dynamic changes
+  -> refactor the code

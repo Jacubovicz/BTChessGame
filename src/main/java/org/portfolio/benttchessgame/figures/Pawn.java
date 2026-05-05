@@ -4,11 +4,11 @@ public class Pawn extends Figure{
 
     private final int DOWN = 1;
     private final int UP = -1;
-
+    private int vector= 1;/* 1 = down, -1 = UP */
     private int[][] offsetsStart = {{1,0},{2,0}};
-    private int vector; /* 1 = down, -1 = UP */
+
     private int[][] offsets = {{1,0}};
-    boolean firstMove = true;
+    private boolean firstMove = true;
 
 
 
@@ -22,17 +22,34 @@ public class Pawn extends Figure{
         super(color);
         super.setName("pawn");
         this.vector = vector;
+
+        if(vector == -1)
+        {
+            for(int[] offset : offsetsStart)
+            {
+                offset[0] *= vector;
+            }
+            this.offsets[0][0] *= vector;
+
+        }
+
     }
 
 
     @Override
     public int[][] getOffset() {
 
-        if(firstMove) return offsetsStart;
+        if(firstMove)
+        {
+            return offsetsStart;
+        }
+        else
+            return offsets;
+    }
 
-        firstMove = false;
-        return offsets;
-
+    public void disableFirstMove()
+    {
+        this.firstMove = false;
     }
 
 

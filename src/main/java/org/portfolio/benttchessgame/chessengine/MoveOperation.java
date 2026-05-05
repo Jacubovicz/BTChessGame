@@ -4,11 +4,26 @@ public class MoveOperation {
 
     Cell initCell, destCell;
 
-    public MoveOperation(Cell initCell, Cell destCell)
-    {
+    public MoveOperation() {
+
+    }
+
+    public MoveOperation(Cell initCell, Cell destCell) {
         this.initCell = initCell;
         this.destCell = destCell;
     }
+
+    public void clear()
+    {
+        this.initCell = null;
+        this.destCell = null;
+    }
+
+    public boolean isValid()
+    {
+        return initCell != null && destCell != null;
+    }
+
 
     public Cell getInitCell()
     {

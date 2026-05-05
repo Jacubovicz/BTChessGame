@@ -9,6 +9,7 @@ import java.util.Map;
 public class Painter {
 
     private final StackPane[][] gameBoard; //grid
+    private final ArrayList<StackPane> cleanupBuffer = new ArrayList<>();
 
     private ArrayList<Cell> avlMoves;// cells marked as green
 
@@ -20,6 +21,22 @@ public class Painter {
         AVL_STYLE, ENEMY_STYLE, CLICKED_MOVED_STYLE, NO_STYLE;
     }
 
+    public void addToCleanupBuffer(Cell cell) //This is adding to the list as yellow clicks
+    {
+        StackPane stP1 = gameBoard[cell.getRow()][cell.getCol()];
+        paint(Styles.CLICKED_MOVED_STYLE, stP1);
+        cleanupBuffer.add(stP1); //This needs to be cleaned with new iteration
+
+    }
+
+    public void cleanTheBuffer() // removing the coulours from the board.
+    {
+        for(StackPane s : cleanupBuffer)
+        {
+            s.setStyle(stylesMap.get(Styles.NO_STYLE));
+        }
+        cleanupBuffer.clear();
+    }
 
    public Painter(StackPane[][] gameBoard)
    {
@@ -32,12 +49,17 @@ public class Painter {
                Styles.NO_STYLE, "");
    }
 
-   public void paint(Styles s, int row, int col)
+   private void paint(Styles s, StackPane stackPane)
+   {
+       stackPane.setStyle(stylesMap.get(s));
+   }
+
+   private void paint(Styles s, int row, int col)
    {
        gameBoard[row][col].setStyle(stylesMap.get(s));
    }
 
-   public void paint(Styles s, ArrayList<Cell> avlMoves)
+   private void paint(Styles s, ArrayList<Cell> avlMoves)
    {
        this.avlMoves = avlMoves;
 
@@ -47,11 +69,28 @@ public class Painter {
        }
    }
 
-   public void removePaint()
+   public void paintAvlMoves(ArrayList<Cell> avlMoves)
+   {
+       paint(Styles.AVL_STYLE, avlMoves);
+   }
+
+   public void paintClickedOrMoved(int row, int col)
+   {
+       paint(Styles.CLICKED_MOVED_STYLE, row, col);
+   }
+
+   public void removeAvlMvsPaint() //removes only the avlMoves paint
    {
            paint(Styles.NO_STYLE, avlMoves);
 
            avlMoves.clear();
+   }
+
+   public void removeAllPaintIncl(int row, int col) // paints avlMoves and the clicked field.
+   {
+       removeAvlMvsPaint();
+       paint(Styles.NO_STYLE, row,col);
+
    }
 
    public boolean isInAvailableMoves(int row, int col)

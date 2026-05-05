@@ -1,12 +1,7 @@
 package org.portfolio.benttchessgame.chessengine;
 
-import org.portfolio.benttchessgame.chessengine.listeners.BoardChangedListener;
 import org.portfolio.benttchessgame.chessengine.players.BasePlayer;
 import org.portfolio.benttchessgame.chessengine.players.Player;
-
-import java.sql.Array;
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class ChessEngine{

@@ -50,7 +50,6 @@ public class Validator {
 
         for(int[] offset : piece.getOffset())
         {
-
             addMovesInDirection(initialCell.getRow(), initialCell.getCol(), offset[0], offset[1], piece);
         }
 

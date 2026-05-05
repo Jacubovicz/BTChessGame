@@ -6,6 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.portfolio.benttchessgame.chessengine.ChessEngine;
+import org.portfolio.benttchessgame.chessengine.ChessEngineRunner;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -57,7 +58,11 @@ public class SceneManager {
                 if(e == EnumViews.GAME_VIEW)
                 {
                     GameViewController controller = loader.getController();
-                    controller.setChessEngine(new ChessEngine());
+                    ChessEngineRunner engineRunner = new ChessEngineRunner();
+
+                    Thread engineThread = new Thread(engineRunner);
+                    engineThread.start();
+                    controller.setChessEngineRunner(engineRunner);
                 }
 
 

@@ -4,9 +4,7 @@ public class MoveOperation {
 
     Cell initCell, destCell;
 
-    public MoveOperation() {
-
-    }
+    public MoveOperation() {}
 
     public MoveOperation(Cell initCell, Cell destCell) {
         this.initCell = initCell;
@@ -23,7 +21,6 @@ public class MoveOperation {
     {
         return initCell != null && destCell != null;
     }
-
 
     public Cell getInitCell()
     {

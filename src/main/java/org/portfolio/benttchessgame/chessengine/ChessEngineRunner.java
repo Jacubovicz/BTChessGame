@@ -35,7 +35,6 @@ public class ChessEngineRunner implements Runnable{
 
        while(running)
        {
-
            if(!commands.isEmpty())
            {
                EngineCommand command = commands.poll();
@@ -43,7 +42,6 @@ public class ChessEngineRunner implements Runnable{
                if(command instanceof StartNewGame ng)
                {
                    engine.setTheNewGame(ng.getPlayerOne(), ng.getPlayerTwo());
-
                }
                else if(command instanceof ProposeMove p)
                {
@@ -53,8 +51,6 @@ public class ChessEngineRunner implements Runnable{
                {
                    engine.moveTheFigure(m.getMoveOperation());
                }
-
-
            }
        }
     }

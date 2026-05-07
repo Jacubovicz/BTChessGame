@@ -13,7 +13,7 @@ public final class RuleApplicator {
         throw new UnsupportedOperationException("This class is only for rule application.");
     }
 //What is actually the role of starterMoves?
-    public static ArrayList<Cell> apply(int row, int col, ArrayList<Cell> possibleMoves, Figure[][] grid, boolean[][] starterMoves)
+    public static ArrayList<Cell> apply(int row, int col, ArrayList<Cell> possibleMoves, Figure[][] grid, Game currentGame)
     {
         ArrayList<Cell> adjustedList = (ArrayList<Cell>) possibleMoves.clone();
         Figure f = grid[row][col];
@@ -22,8 +22,8 @@ public final class RuleApplicator {
         {
          for(int[] offset : p.getBeatingOffset())
          {
-             int rowOffset = offset[0]*p.getVector();
-             int colOffset= offset[1]*p.getVector();
+             int rowOffset = offset[0];
+             int colOffset= offset[1];
 
              if(inBounds(row + rowOffset, col + colOffset))
              {
@@ -32,7 +32,8 @@ public final class RuleApplicator {
                  if(target != null && p.getColor() != target.getColor())
                  {
                      adjustedList.add(new Cell(row + rowOffset, col + colOffset));
-                     starterMoves[row+rowOffset][col + colOffset] = true;
+                     currentGame.setStarterMoves(row+rowOffset,col+colOffset, true);
+
                  }
              }
 

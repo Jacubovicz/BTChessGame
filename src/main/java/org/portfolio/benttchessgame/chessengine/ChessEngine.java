@@ -8,8 +8,8 @@ public class ChessEngine{
 
     Game currentGame;
     Player player1, player2;
-    Validator validator; // This going to decide the move validation depending on the last taken snapshot.
-    MoveEvaluator simulator; // this will take the last snapshot as the base for prediction algorithm
+    Validator validator;
+    MoveEvaluator simulator;
 
 
     public ChessEngine()
@@ -44,13 +44,7 @@ public class ChessEngine{
     public void proposeMove(int row, int col)
     {
         Cell cell = new Cell(row, col);
-
         validator.checkMoves(cell);
-    }
-
-    public void getTheValidMoves(Cell cell)
-    {
-
     }
 
     public void moveTheFigure(MoveOperation operation)
@@ -58,17 +52,8 @@ public class ChessEngine{
         currentGame.move(operation);
     }
 
-    public void undoPreviousMove()
-    {
-
-    }
-
     public void resetTheGame()
     {
         currentGame = new Game(player1, player2);
     }
-
-
-
-
 }

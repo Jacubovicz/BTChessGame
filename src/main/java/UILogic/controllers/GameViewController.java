@@ -26,18 +26,13 @@ import java.util.*;
 
 public class GameViewController {
 
-
-    private final int FIT_WIDTH = 60;
-    private final int FIT_HEIGHT = 60;
-
-    public Map<String, Image> pieces = new HashMap<>();
+   GameViewInitializer initializer;
 
     ChessEngineRunner engineRunner;
     ChessEngine engine;
     Painter painter;
 
     MoveOperation operation = new MoveOperation();
-    Cell moveFrom, moveTo;
 
     @FXML
     GridPane chessBoard;
@@ -49,100 +44,35 @@ public class GameViewController {
     boolean turn = true; // true - white, false - dark
 
     StackPane[][] gameBoard; //this is the physical grid with options of figure placement
-  //  boolean[][] clickableFields;
-
 
     @FXML
     public void initialize()
     {
         ObservableList<Node> list = chessBoard.getChildren();
         gameBoard = new StackPane[chessBoard.getRowCount()][chessBoard.getColumnCount()];
-        fillTheBoard(list, gameBoard);
-        preloadTheImages();
+        initializer = new GameViewInitializer(list, gameBoard, this);
 
         this.painter = new Painter(gameBoard);
-
     }
 
-
-    private void updateTheBoard(Figure[][] fig)
+    private void renderTheBoard(Figure[][] fig)
     {
-
-        for(int i = 0; i < fig.length; i++)
+        for(int row = 0; row < fig.length; row++)
         {
-            for(int j = 0; j < fig.length; j++)
+            for(int col = 0; col < fig.length; col++)
             {
-                ImageView v = (ImageView) gameBoard[i][j].getChildren().getLast();
-
+                ImageView v = (ImageView) gameBoard[row][col].getChildren().getLast();
                 v.setImage(null);
-
-                if(fig[i][j] != null)
+                if(fig[row][col] != null)
                 {
-                    String key = fig[i][j].toString();
-
-                    Image img = pieces.get(key);
+                    String key = fig[row][col].toString();
+                    Image img = initializer.getPieces().get(key);
                     v.setImage(img);
                 }
-
             }
         }
     }
 
-    //The process of preloading all the figures
-    private void preloadTheImages()
-    {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("/images/figures/figures_list.txt"))));
-
-        reader.lines().forEach(this::addTheVal);
-
-    }
-
-    //The one step of adding the value to the map of figures
-    private void addTheVal(String line)
-    {
-        String clean = line.replace("\uFEFF", "").trim();
-        String lineWithoutPNG = line.replace(".png", "").trim();
-        String path = "/images/figures/" + clean;
-
-        var stream = getClass().getResourceAsStream(path);
-
-        if (stream == null) {
-            System.out.println("Resource not found: " + path);
-            return;
-        }
-        Image img = new Image(stream);
-
-        this.pieces.put(lineWithoutPNG, img);
-    }
-
-    /*
-    * Fills the board over GridPane with StackPanes and concrete ImageViews
-    * needed later for figure placement.
-     */
-    public void fillTheBoard(ObservableList<Node> list, StackPane[][] gameBoard)
-    {
-        this.gameBoard = gameBoard;
-
-        for(Node n : list)
-        {
-            if(!(n instanceof StackPane sp)) continue;
-            Integer r = GridPane.getRowIndex(sp);
-            Integer c = GridPane.getColumnIndex(sp);
-
-            ImageView imgView = new ImageView();
-            imgView.setFitWidth(FIT_WIDTH);
-            imgView.setFitHeight(FIT_HEIGHT);
-
-            sp.getChildren().add(imgView);
-
-            int row = (r==null) ? 0 : r;
-            int col = (c==null) ? 0 : c;
-
-            sp.setOnMouseClicked(event -> proposeMove(sp, row, col));
-            gameBoard[row][col] = sp;
-
-        }
-    }
 
     public void proposeMove(StackPane sp, int row, int col)
     {
@@ -172,10 +102,10 @@ public class GameViewController {
         this.engine = engine;
 
         engine.getCurrentGame().addBoardChangedListener(
-                board -> Platform.runLater(() -> updateTheBoard(board))
+                board -> Platform.runLater(() -> renderTheBoard(board))
         );
 
-        updateTheBoard(engine.getCurrentGame().getSnapshot());
+        renderTheBoard(engine.getCurrentGame().getSnapshot());
         activateTheFields(engine.getCurrentGame().getStarterMoves());
         wireListeners();
     }

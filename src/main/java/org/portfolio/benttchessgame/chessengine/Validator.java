@@ -4,10 +4,8 @@ import org.portfolio.benttchessgame.chessengine.listeners.AvailableMovesChangeLi
 import org.portfolio.benttchessgame.figures.Figure;
 import org.portfolio.benttchessgame.figures.Pawn;
 
-
 import java.util.ArrayList;
 import java.util.List;
-
 
 public class Validator {
 
@@ -19,32 +17,24 @@ public class Validator {
     private Figure[][] snapshotGrid;
     private ArrayList<Cell> possibleMoves;
 
-    //First showup of Validator
+    private ArrayList<Cell> fieldsToCheck; //this is only for the use of MoveEvaluation
+
+
     public Validator(Game currentGame)
     {
         this.currentGame = currentGame;
         this.originalGrid = currentGame.getSnapshot();
     }
 
-    private void updateTheBoard()
+    public ArrayList<Cell> checkMoves(Cell initialCell)
     {
-        this.originalGrid = currentGame.getSnapshot();
-    }
-
-    public ArrayList<Cell> getPossibleMoves()
-    {
-        return possibleMoves;
-    }
-
-    public void checkMoves(Cell initialCell)
-    {
-        snapshotGrid = originalGrid.clone();
+        snapshotGrid = currentGame.getSnapshot();
         Figure piece = snapshotGrid[initialCell.getRow()][initialCell.getCol()];
 
         if(piece == null)
         {
             possibleMoves = new ArrayList<>();
-            return;
+            return null;
         }
         possibleMoves = new ArrayList<>();
 
@@ -55,6 +45,7 @@ public class Validator {
 
         notifyAvlMovesListeners();
 
+        return null;
     }
 
     public void addMovesInDirection(int row, int col, int rowOff, int colOff, Figure piece) {
@@ -64,10 +55,6 @@ public class Validator {
             if(p.isLocked() && p.isFirstMove())
             {
                 return;
-            }
-            if(row == 6)
-            {
-                p.setVector(-1);
             }
         }
 
@@ -85,7 +72,7 @@ public class Validator {
 
                 if(!(piece.doesSlide()))
                 {
-                    possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame.getStarterMoves());
+                    possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame);
                     return;
                 }
             }
@@ -103,21 +90,14 @@ public class Validator {
                         ((Pawn) piece).setLocked();
                     }
                 }
-                this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame.getStarterMoves());
+                this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame);
                 return;
             }
-
             r += rowOff;
             c += colOff;
-
         }
-
-        this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame.getStarterMoves());
-
-
+        this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame);
     }
-
-
 
     private boolean isEnemy(Figure fig1, Figure fig2)
     {
@@ -135,12 +115,6 @@ public class Validator {
         avlMovesListeners.add(listener);
     }
 
-    public void removeAvlMovesChangedListener(AvailableMovesChangeListener listener)
-    {
-        avlMovesListeners.remove(listener);
-    }
-
-
     private void notifyAvlMovesListeners()
     {
         for(AvailableMovesChangeListener listener : avlMovesListeners)
@@ -148,5 +122,4 @@ public class Validator {
             listener.onMovesChangeEvent(possibleMoves);
         }
     }
-
 }

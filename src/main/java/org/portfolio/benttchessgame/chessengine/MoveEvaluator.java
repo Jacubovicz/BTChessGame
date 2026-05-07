@@ -8,4 +8,9 @@ public class MoveEvaluator {
     {
         this.validator = validator;
     }
+
+    public void evaluate()
+    {
+
+    }
 }

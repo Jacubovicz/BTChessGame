@@ -6,10 +6,11 @@ public class Pawn extends Figure{
     private final int UP = -1;
     private int vector= 1;/* 1 = down, -1 = UP */
     private int[][] offsetsStart = {{1,0},{2,0}};
-
     private int[][] offsets = {{1,0}};
+    private int[][] beatingOffset = {{1,1},{1,-1}};
     private boolean firstMove = true;
 
+    private boolean isLocked = false;
 
 
     public Pawn(boolean color) {
@@ -47,6 +48,11 @@ public class Pawn extends Figure{
             return offsets;
     }
 
+    public int[][] getBeatingOffset()
+    {
+        return this.beatingOffset;
+    }
+
     public void disableFirstMove()
     {
         this.firstMove = false;
@@ -73,5 +79,20 @@ public class Pawn extends Figure{
     public int getVector()
     {
         return this.vector;
+    }
+
+    public void setLocked()
+    {
+        this.isLocked = true;
+    }
+
+    public boolean isLocked()
+    {
+        return this.isLocked;
+    }
+
+    public boolean isFirstMove()
+    {
+        return this.firstMove;
     }
 }

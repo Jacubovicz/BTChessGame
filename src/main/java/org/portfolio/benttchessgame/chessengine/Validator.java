@@ -59,10 +59,18 @@ public class Validator {
 
     public void addMovesInDirection(int row, int col, int rowOff, int colOff, Figure piece) {
 
-        if(row == 6 && piece.getClass() == Pawn.class)
+        if(piece instanceof Pawn p)
         {
-            ((Pawn) piece).setVector(-1);
+            if(p.isLocked() && p.isFirstMove())
+            {
+                return;
+            }
+            if(row == 6)
+            {
+                p.setVector(-1);
+            }
         }
+
         int r = row + rowOff;
         int c = col + colOff;
 
@@ -75,15 +83,27 @@ public class Validator {
                 possibleMoves.add(new Cell(r,c));
                 currentGame.setStarterMoves(r,c,true);
 
-                if(!(piece.doesSlide())) return;
+                if(!(piece.doesSlide()))
+                {
+                    possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame.getStarterMoves());
+                    return;
+                }
             }
             else
             {
                 if(isEnemy(piece, target))
                 {
-                    possibleMoves.add(new Cell(r,c));
-                    currentGame.setStarterMoves(r,c,true);
+                    if(!(piece instanceof Pawn))//Pawn can't attack forward.
+                    {
+                        possibleMoves.add(new Cell(r,c));
+                        currentGame.setStarterMoves(r,c,true);
+                    }
+                    else
+                    {
+                        ((Pawn) piece).setLocked();
+                    }
                 }
+                this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame.getStarterMoves());
                 return;
             }
 
@@ -92,6 +112,7 @@ public class Validator {
 
         }
 
+        this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame.getStarterMoves());
 
 
     }

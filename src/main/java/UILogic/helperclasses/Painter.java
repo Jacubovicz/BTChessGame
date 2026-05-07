@@ -66,6 +66,14 @@ public class Painter {
        for(Cell c : avlMoves)
        {
            gameBoard[c.getRow()][c.getCol()].setStyle(stylesMap.get(s));
+           /*
+           * testcode
+            */
+
+        //   gameBoard[c.getRow()][c.getCol()].setDisable(false);
+
+           /**/
+
        }
    }
 

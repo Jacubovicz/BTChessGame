@@ -53,13 +53,10 @@ public class Validator {
 
     private void checkForCheckmate(ArrayList<Cell> possibleMoves, Cell initialCell, Figure[][] snapshotGrid)
     {
-
         int indexToRemove = 0;
         ArrayList<Cell> cellsToBeRemoved = new ArrayList<>();
         for(Cell cell : possibleMoves)
         {
-            boolean skip = false;
-
             Figure[][] localSnapshotCopy = cloneArray(snapshotGrid);
             Figure potentialMove = localSnapshotCopy[initialCell.getRow()][initialCell.getCol()];
             localSnapshotCopy[cell.getRow()][cell.getCol()] = potentialMove;
@@ -104,13 +101,20 @@ public class Validator {
                     continue;
                 }
 
-                for(int[] offsets : piece.getOffset())
+                var x = piece.getOffset();
+                if(piece instanceof Pawn p)
+                {
+                    x = p.getBeatingOffset();
+                }
+
+                for(int[] offsets : x)
                 {
                     int localRowOffset = r + offsets[0];
                     int localColOffset = c + offsets[1];
                     while(inBounds(localRowOffset, localColOffset))
                     {
                         Figure target = snapshotGrid[localRowOffset][localColOffset];
+
 
                         if(target != null && target.getColor() == piece.getColor()) break;
                         if(target != null && target.getColor() != piece.getColor() && target instanceof King)
@@ -128,7 +132,6 @@ public class Validator {
                 }
                 c++;
             }
-
             r++;
         }
         return null;

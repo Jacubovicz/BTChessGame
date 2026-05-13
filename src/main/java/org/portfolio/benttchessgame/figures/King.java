@@ -4,7 +4,7 @@ public class King extends Figure{
 
 
 
-    private final int[][] offsets = {{-1,-1}, {0,-1}, {1,-1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}};
+    private final int[][] offsets = {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}};
 
     private boolean moved = false;
 

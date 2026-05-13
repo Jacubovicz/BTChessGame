@@ -1,7 +1,5 @@
 package UILogic.controllers;
 
-
-
 import UILogic.helperclasses.Painter;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -20,9 +18,6 @@ import org.portfolio.benttchessgame.chessengine.commands.MakeMove;
 import org.portfolio.benttchessgame.chessengine.commands.ProposeMove;
 import org.portfolio.benttchessgame.figures.Figure;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.*;
 
 public class GameViewController {
 
@@ -39,7 +34,6 @@ public class GameViewController {
 
     @FXML
     Label timer, playerOne, playerTwo;
-
 
     boolean turn = true; // true - white, false - dark
 
@@ -72,7 +66,6 @@ public class GameViewController {
             }
         }
     }
-
 
     public void proposeMove(StackPane sp, int row, int col)
     {

@@ -30,8 +30,17 @@ public class PieceBoard {
 
     public Figure[][] getSnapshot()
     {
-       return piecesOnBoard.clone();
+
+       Figure[][] snapshot = new Figure[piecesOnBoard.length][piecesOnBoard.length];
+
+       for(int row = 0; row < piecesOnBoard.length; row++)
+       {
+           snapshot[row] = piecesOnBoard[row].clone();
+       }
+
+       return snapshot;
     }
+
 
 
 }

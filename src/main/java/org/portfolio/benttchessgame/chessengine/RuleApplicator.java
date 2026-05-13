@@ -16,6 +16,7 @@ public final class RuleApplicator {
     public static ArrayList<Cell> apply(int row, int col, ArrayList<Cell> possibleMoves, Figure[][] grid, Game currentGame)
     {
         ArrayList<Cell> adjustedList = (ArrayList<Cell>) possibleMoves.clone();
+
         Figure f = grid[row][col];
 
         if(f instanceof Pawn p)

@@ -2,8 +2,6 @@ package org.portfolio.benttchessgame.figures;
 
 public class Pawn extends Figure{
 
-
-    private int vector= 1;/* 1 = down, -1 = UP */
     private int[][] offsetsStart = {{1,0},{2,0}};
     private int[][] offsets = {{1,0}};
     private int[][] beatingOffset = {{1,1},{1,-1}};
@@ -20,7 +18,6 @@ public class Pawn extends Figure{
     {
         super(color);
         super.setName("pawn");
-        this.vector = vector;
 
         if(vector == -1)
         {
@@ -35,7 +32,6 @@ public class Pawn extends Figure{
             }
             this.offsets[0][0] *= vector;
         }
-
     }
 
     @Override

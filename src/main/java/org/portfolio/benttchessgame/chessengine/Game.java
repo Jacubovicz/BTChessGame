@@ -6,7 +6,7 @@ import org.portfolio.benttchessgame.chessengine.listeners.TimeChangeListener;
 import org.portfolio.benttchessgame.chessengine.listeners.TurnChangedListener;
 import org.portfolio.benttchessgame.chessengine.players.Player;
 import org.portfolio.benttchessgame.figures.Figure;
-import org.portfolio.benttchessgame.figures.Pawn;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +16,9 @@ public class Game {
 
     PieceBoard currentPieceBoard;
     PieceBoardManager pieceBoardManager;
+    Session currentSession;
+    // Sessions will have data about time, special rules (en passant) available for players, move counter
+
 
     Figure[][] snapshot;
 
@@ -49,6 +52,9 @@ public class Game {
 
         snapshot = currentPieceBoard.getSnapshot();
 
+        // test code start
+         this.currentSession = new Session();
+        // test code end
         new TimerThread(time, timeListeners);
 
         setTurn(true);

@@ -17,6 +17,8 @@ public abstract class Player {
    public final boolean WHITE = true;
    public final boolean BLACK = false;
 
+
+
   /* protected*/ Player(String name)
    {
        movements = new ConcurrentLinkedQueue<>();

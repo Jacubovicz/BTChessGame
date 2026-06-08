@@ -2,6 +2,7 @@ package org.portfolio.benttchessgame.figures;
 
 public class Rook extends Figure{
 
+    private boolean moved = false;
 
     private int[][] offsets = {{0,1}, {0,-1}, {-1,0}, {1,0}};
 
@@ -19,6 +20,16 @@ public class Rook extends Figure{
     @Override
     public int[][] getOffset() {
         return offsets;
+    }
+
+    public void setMoved()
+    {
+        this.moved = true;
+    }
+
+    public boolean getMoved()
+    {
+        return moved;
     }
 
 }

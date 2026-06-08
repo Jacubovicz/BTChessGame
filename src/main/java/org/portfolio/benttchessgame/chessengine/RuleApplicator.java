@@ -2,7 +2,9 @@ package org.portfolio.benttchessgame.chessengine;
 
 
 import org.portfolio.benttchessgame.figures.Figure;
+import org.portfolio.benttchessgame.figures.King;
 import org.portfolio.benttchessgame.figures.Pawn;
+import org.portfolio.benttchessgame.figures.Rook;
 
 import java.util.ArrayList;
 
@@ -19,8 +21,17 @@ public final class RuleApplicator {
 
         Figure f = grid[row][col];
 
+        if(f instanceof King k && k.getMoved() == false)
+        {
+            checkCastlings(k, row, col);
+        }
         if(f instanceof Pawn p)
         {
+            if(p.isEnpassantPossible())
+            {
+                adjustedList.add(p.getEnpassantCell());
+            }
+
          for(int[] offset : p.getBeatingOffset())
          {
              int rowOffset = offset[0];
@@ -41,6 +52,35 @@ public final class RuleApplicator {
          }
         }
         return adjustedList;
+    }
+
+      private static void checkCastlings(King k, int row, int col)
+      {
+          checkQueenSideCastling(k, row, col);
+          checkKingSideCastling(k, row, col);
+      }
+
+
+      private static void checkQueenSideCastling(King k, int row, int col)
+      {
+          if(k.getColor() == true)//white
+          {
+              if(cellsAreEmptyBetween(row,col))
+              {
+
+              }
+          }
+      }
+
+
+    private boolean cellsAreEmptyBetween(int row, int col)
+    {
+
+    }
+
+    private static void checkKingSideCastling(King k, int row, int col)
+    {
+
     }
 
     public static boolean inBounds(int row, int col)

@@ -93,13 +93,60 @@ public class PieceBoardManager {
         if(board[from.getRow()][from.getCol()] != null)
         {
             Figure f= board[from.getRow()][from.getCol()];
-            if(f instanceof Pawn p) p.disableFirstMove(); //This is special case for the Pawn.
             board[from.getRow()][from.getCol()] = null;
             board[to.getRow()][to.getCol()] = f;
+
+            if(f instanceof Pawn p)
+            {
+                p.incTheRank();
+                if(Math.abs(from.getRow() - to.getRow()) == 2)
+                {
+                    p.incTheRank();
+                    checkForEnPassants(to, (Pawn) f);
+                }
+                p.disableFirstMove(); //This is special case for the Pawn.
+                if(p.getRank() == 7)
+                {
+                    promotePawn(new Queen(p.getColor()), to.getRow(), to.getCol());
+                }
+            }
 
             fillTheStarterMoves(!turn);
 
         }
+    }
+
+    public void checkForEnPassants(Cell cell, Pawn movedPawn)
+    {
+        int leftCol = cell.getCol() - 1;
+        int rightCol = cell.getCol() + 1;
+        Figure leftFigure = null, rightFigure = null;
+
+        if(leftCol >= 0)
+        {
+            leftFigure = piecesOnBoard[cell.getRow()][leftCol];
+        }
+        if(rightCol <= 7)
+        {
+            rightFigure = piecesOnBoard[cell.getRow()][rightCol];
+        }
+
+        Cell enPassantCell = new Cell(cell.getRow() - movedPawn.getVector(), cell.getCol());
+
+        if(leftFigure != null && leftFigure instanceof Pawn p)
+        {
+            p.setEnpassant(enPassantCell);
+        }
+        if(rightFigure != null && rightFigure instanceof Pawn p)
+        {
+            p.setEnpassant(enPassantCell);
+        }
+
+    }
+
+    private void promotePawn(Figure fig, int row, int col)
+    {
+        this.piecesOnBoard[row][col] = fig;
     }
 
 }

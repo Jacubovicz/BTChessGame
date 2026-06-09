@@ -51,5 +51,4 @@ public abstract class Figure {
         return this.getColorName() + "_" + NAME;
     }
 
-
 }

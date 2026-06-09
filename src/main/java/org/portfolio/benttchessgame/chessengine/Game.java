@@ -19,22 +19,15 @@ public class Game {
     Session currentSession;
     // Sessions will have data about time, special rules (en passant) available for players, move counter
 
-
     Figure[][] snapshot;
 
     Player p1, p2;
 
     boolean turn;
 
-
     Random random = new Random();
 
     List<BoardChangedListener> listeners = new ArrayList<>();
-
-    String time = "0";
-    List<TimeChangeListener> timeListeners = new ArrayList<>();
-
-    List<TurnChangedListener> turnListeners = new ArrayList<>();
 
     List<StarterMovesAvailableListener> starterListeners = new ArrayList<>();
 
@@ -43,7 +36,7 @@ public class Game {
         this.p1 = player1;
         this.p2 = player2;
 
-        this.turn = random.nextBoolean();
+        this.turn = random.nextBoolean(); //this only assigns the colors of the players, not the turn
         player1.setColor(turn);
         player2.setColor(!turn);
 
@@ -54,17 +47,14 @@ public class Game {
 
         // test code start
          this.currentSession = new Session();
+         this.turn = currentSession.getTurn();
         // test code end
-        new TimerThread(time, timeListeners);
 
-        setTurn(true);
     }
 
-    public void setTurn(boolean turn)
+    public PieceBoardManager getPieceBoardManager()
     {
-        this.turn = turn;
-
-        notifyTurnListeners();
+        if(pieceBoardManager != null) return pieceBoardManager; else return null;
     }
 
     public Figure[][] getSnapshot()
@@ -86,9 +76,9 @@ public class Game {
     public void move(MoveOperation moveOperation)
     {
         pieceBoardManager.move(moveOperation, turn);
-        setTurn(!turn);
+        currentSession.switchTurn();
+        this.turn = currentSession.getTurn();
         notifyListeners();
-        notifyTurnListeners();
         notifyStarterMovesListeners();
     }
 
@@ -107,20 +97,12 @@ public class Game {
 
     public void addTimeChangeListener(TimeChangeListener listener)
     {
-        timeListeners.add(listener);
+        currentSession.getTimeListeners().add(listener);
     }
 
     public void addTurnListener(TurnChangedListener listener)
     {
-        turnListeners.add(listener);
-    }
-
-    public void notifyTurnListeners()
-    {
-        for(TurnChangedListener listener : turnListeners)
-        {
-            listener.onTurnChanged(turn);
-        }
+        currentSession.getTurnListeners().add(listener);
     }
 
     public void addStarterMovesAvailableListener(StarterMovesAvailableListener listener)

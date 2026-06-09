@@ -4,7 +4,6 @@ package org.portfolio.benttchessgame.chessengine;
 import org.portfolio.benttchessgame.figures.Figure;
 import org.portfolio.benttchessgame.figures.King;
 import org.portfolio.benttchessgame.figures.Pawn;
-import org.portfolio.benttchessgame.figures.Rook;
 
 import java.util.ArrayList;
 
@@ -30,6 +29,8 @@ public final class RuleApplicator {
             if(p.isEnpassantPossible())
             {
                 adjustedList.add(p.getEnpassantCell());
+                currentGame.setStarterMoves(p.getEnpassantCell().getRow(), p.getEnpassantCell().getCol(),true);
+
             }
 
          for(int[] offset : p.getBeatingOffset())

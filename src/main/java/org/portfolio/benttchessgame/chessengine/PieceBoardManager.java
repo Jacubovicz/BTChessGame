@@ -82,6 +82,12 @@ public class PieceBoardManager {
         }
     }
 
+    public void kill(Cell cell)
+    {
+        pieceBoard.getPiecesOnBoard()[cell.getRow()][cell.getCol()] = null;
+
+    }
+
     public void move(MoveOperation moveOperation, boolean turn)
     {
         Cell from = moveOperation.getInitCell();
@@ -99,6 +105,11 @@ public class PieceBoardManager {
             if(f instanceof Pawn p)
             {
                 p.incTheRank();
+                if(p.isEnpassantPossible() && to.equals(p.getEnpassantCell()))
+                {
+                    piecesOnBoard[to.getRow() - p.getVector()][to.getCol()] = null;
+                }
+                p.setEnpassant(null); // test code
                 if(Math.abs(from.getRow() - to.getRow()) == 2)
                 {
                     p.incTheRank();

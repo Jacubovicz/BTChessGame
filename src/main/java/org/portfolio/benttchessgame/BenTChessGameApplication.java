@@ -12,8 +12,6 @@ import java.io.IOException;
 
 public class BenTChessGameApplication extends Application {
 
-
-
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -23,7 +21,5 @@ public class BenTChessGameApplication extends Application {
     public static void main(String[] args) {
 
        launch();
-
-
     }
 }

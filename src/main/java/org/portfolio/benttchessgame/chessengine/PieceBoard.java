@@ -41,7 +41,5 @@ public class PieceBoard {
        return snapshot;
     }
 
-
-
 }
 

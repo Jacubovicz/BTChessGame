@@ -2,6 +2,7 @@ package org.portfolio.benttchessgame.chessengine;
 
 import org.portfolio.benttchessgame.chessengine.players.BasePlayer;
 import org.portfolio.benttchessgame.chessengine.players.Player;
+import org.portfolio.benttchessgame.figures.King;
 
 
 public class ChessEngine{
@@ -49,7 +50,16 @@ public class ChessEngine{
 
     public void moveTheFigure(MoveOperation operation)
     {
+        if(currentGame.getSnapshot()[operation.getInitCell().getRow()][operation.getInitCell().getCol()] instanceof King k)
+        {
+            if(k.getCastling() != null)
+            {
+                currentGame.move(k.getCastling());
+                k.setCastling(null);
+            }
+        }
         currentGame.move(operation);
+
     }
 
     public void resetTheGame()

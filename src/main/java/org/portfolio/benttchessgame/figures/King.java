@@ -1,9 +1,10 @@
 package org.portfolio.benttchessgame.figures;
 
+import org.portfolio.benttchessgame.chessengine.MoveOperation;
+
 public class King extends Figure{
 
-
-
+    private MoveOperation castling;
     private final int[][] offsets = {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}};
 
     private boolean moved = false;
@@ -19,12 +20,22 @@ public class King extends Figure{
         return offsets;
     }
 
-    public void setMoved()
+    public MoveOperation getCastling()
+    {
+        return castling;
+    }
+
+    public void setCastling(MoveOperation castlingOperation)
+    {
+        this.castling = castlingOperation;
+    }
+
+    public void setDidMove()
     {
         this.moved = true;
     }
 
-    public boolean getMoved()
+    public boolean didMove()
     {
         return this.moved;
     }

@@ -4,21 +4,35 @@ import javafx.scene.layout.StackPane;
 import org.portfolio.benttchessgame.chessengine.Cell;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
+import static UILogic.helperclasses.EnumColors.GREEN;
+import static UILogic.helperclasses.EnumColors.YELLOW;
+
 public class Painter {
+
+
 
     private final StackPane[][] gameBoard; //grid
     private final ArrayList<StackPane> cleanupBuffer = new ArrayList<>();
 
-    private ArrayList<Cell> avlMoves;// cells marked as green
+  //  private ArrayList<Cell> avlMoves;// cells marked as green
+    private HashMap<EnumColors, ArrayList<Cell>> allMoves;
 
+    private ArrayList<Cell> avlMovesCells;
+    private ArrayList<Cell> clickedMovedCells;
+    private ArrayList<Cell> checkmateCells;
+    private ArrayList<Cell> castlingCell;
+    //test code start
+    //private HashMap<EnumColors, ArrayList<Cell>> cellsToPaint;
+    //test code end
 
     Map<Styles, String> stylesMap; // styles enum
 
     public enum Styles
     {
-        AVL_STYLE, ENEMY_STYLE, CLICKED_MOVED_STYLE, NO_STYLE;
+        AVL_STYLE, ENEMY_STYLE, CLICKED_MOVED_STYLE, CASTLING_STYLE, NO_STYLE;
     }
 
     public void addToCleanupBuffer(Cell cell) //This is adding to the list as yellow clicks
@@ -41,11 +55,17 @@ public class Painter {
    public Painter(StackPane[][] gameBoard)
    {
        this.gameBoard = gameBoard;
-       avlMoves = new ArrayList<>();
+
+       allMoves = new HashMap<>();
+       avlMovesCells = new ArrayList<>();
+       checkmateCells = new ArrayList<>();
+       clickedMovedCells = new ArrayList<>();
+
 
        stylesMap = Map.of(Styles.AVL_STYLE, "-fx-border-color: green; -fx-border-width:5px;",
                Styles.ENEMY_STYLE, "-fx-border-color: red; -fx-border-width:5px;",
                Styles.CLICKED_MOVED_STYLE, "-fx-border-color: yellow; -fx-border-width: 5px;",
+               Styles.CASTLING_STYLE, "-fx-border-color: blue; -fx-border-width: 5px",
                Styles.NO_STYLE, "");
    }
 
@@ -59,11 +79,11 @@ public class Painter {
        gameBoard[row][col].setStyle(stylesMap.get(s));
    }
 
-   private void paint(Styles s, ArrayList<Cell> avlMoves)
+   private void paint(Styles s, ArrayList<Cell> cellsToPaint)
    {
-       this.avlMoves = avlMoves;
+      // this.avlMoves = avlMoves;
 
-       for(Cell c : avlMoves)
+       for(Cell c : cellsToPaint)
        {
            if(c != null)
            {
@@ -73,9 +93,36 @@ public class Painter {
        }
    }
 
-   public void paintAvlMoves(ArrayList<Cell> avlMoves)
+
+//the area of interest start
+   public void paintAvlMoves(HashMap<EnumColors, ArrayList<Cell>> allMoves)
    {
-       paint(Styles.AVL_STYLE, avlMoves);
+       this.allMoves = allMoves;
+
+       for(EnumColors color : allMoves.keySet())
+       {
+           ArrayList<Cell> listToPaint = allMoves.get(color);
+           if(color == EnumColors.GREEN)
+           {
+               this.avlMovesCells = listToPaint;
+               paint(Styles.AVL_STYLE, avlMovesCells);
+           }
+           if(color == EnumColors.RED)
+           {
+               this.checkmateCells = listToPaint;
+               paint(Styles.ENEMY_STYLE, checkmateCells);
+           }
+           if(color == EnumColors.YELLOW)
+           {
+               this.clickedMovedCells = listToPaint;
+               paint(Styles.CLICKED_MOVED_STYLE, clickedMovedCells);
+           }
+           if(color == EnumColors.BLUE)
+           {
+               this.castlingCell = listToPaint;
+               paint(Styles.CASTLING_STYLE, castlingCell);
+           }
+       }
    }
 
    public void paintClickedOrMoved(int row, int col)
@@ -85,25 +132,23 @@ public class Painter {
 
    public void removeAvlMvsPaint() //removes only the avlMoves paint
    {
-           paint(Styles.NO_STYLE, avlMoves);
-
-           avlMoves.clear();
+       for(EnumColors c : allMoves.keySet())
+       {
+           if(c == EnumColors.GREEN /*|| c == EnumColors.YELLOW*/)
+           {
+               paint(Styles.NO_STYLE, allMoves.get(c));
+           }
+       }
+           allMoves.clear();
    }
 
-   public void removeAllPaintIncl(int row, int col) // paints avlMoves and the clicked field.
-   {
-       removeAvlMvsPaint();
-       paint(Styles.NO_STYLE, row,col);
-
-   }
 
    public boolean isInAvailableMoves(int row, int col)
    {
-       for(Cell singleMove : avlMoves)
-       {
-           if(row == singleMove.getRow() && col == singleMove.getCol()) return true;
-       }
-       return false;
+       Cell temp = new Cell(row, col);
+
+       return avlMovesCells.contains(temp) || (castlingCell == null ? false : castlingCell.contains(temp));
+
    }
 
 }

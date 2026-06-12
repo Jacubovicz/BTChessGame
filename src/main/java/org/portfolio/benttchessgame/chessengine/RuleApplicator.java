@@ -1,11 +1,14 @@
 package org.portfolio.benttchessgame.chessengine;
 
 
+import UILogic.helperclasses.EnumColors;
 import org.portfolio.benttchessgame.figures.Figure;
 import org.portfolio.benttchessgame.figures.King;
 import org.portfolio.benttchessgame.figures.Pawn;
+import org.portfolio.benttchessgame.figures.Rook;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public final class RuleApplicator {
 
@@ -14,15 +17,16 @@ public final class RuleApplicator {
         throw new UnsupportedOperationException("This class is only for rule application.");
     }
 //What is actually the role of starterMoves?
-    public static ArrayList<Cell> apply(int row, int col, ArrayList<Cell> possibleMoves, Figure[][] grid, Game currentGame)
+    public static ArrayList<Cell> apply(int row, int col, ArrayList<Cell> possibleMoves, Figure[][] grid, Game currentGame, HashMap<EnumColors, ArrayList<Cell>> allMarkedCells)
     {
         ArrayList<Cell> adjustedList = (ArrayList<Cell>) possibleMoves.clone();
 
         Figure f = grid[row][col];
 
-        if(f instanceof King k && k.getMoved() == false)
+        if(f instanceof King k && !k.didMove())
         {
-            checkCastlings(k, row, col);
+            //for now I am going to add adjustedList into the parameter. It needs to be refactored later.
+            checkCastlings(k, row, col, grid, allMarkedCells, currentGame);
         }
         if(f instanceof Pawn p)
         {
@@ -55,33 +59,42 @@ public final class RuleApplicator {
         return adjustedList;
     }
 
-      private static void checkCastlings(King k, int row, int col)
+      private static void checkCastlings(King k, int row, int col, Figure[][] grid, HashMap<EnumColors, ArrayList<Cell>> allMarkedCells, Game currentGame)
       {
-          checkQueenSideCastling(k, row, col);
-          checkKingSideCastling(k, row, col);
-      }
-
-
-      private static void checkQueenSideCastling(King k, int row, int col)
-      {
-          if(k.getColor() == true)//white
+          int[] columnIndexesOfRook = {0, 7};
+          for(int columnOfARook : columnIndexesOfRook)
           {
-              if(cellsAreEmptyBetween(row,col))
+              if(grid[row][columnOfARook] instanceof Rook r && !r.didMove())
               {
-
+                  if(cellsAreEmptyBetween(row,col, columnOfARook,grid))
+                  {
+                      var expression = col > columnOfARook ? col-2 : col+2; //this defines the way in which is moving
+                      var expressionForRookMovement = col > columnOfARook ? col-1 : col+1;
+                      allMarkedCells.computeIfAbsent(EnumColors.BLUE, func -> new ArrayList<>()).add(new Cell(row, expression));
+                      currentGame.setStarterMoves(row, expression, true);
+                      k.setCastling(new MoveOperation(new Cell(row, columnOfARook), new Cell(row, expressionForRookMovement)));
+                  }
               }
           }
       }
 
-
-    private boolean cellsAreEmptyBetween(int row, int col)
+    private static boolean cellsAreEmptyBetween(int row, int col, int rookCol, Figure[][] copyOfGrid)
     {
-
-    }
-
-    private static void checkKingSideCastling(King k, int row, int col)
-    {
-
+        if(col > rookCol)
+        {
+            for(int i = col-1; i > rookCol; i--)
+            {
+                if((copyOfGrid[row][i]) != null) return false;
+            }
+        }
+        else
+        {
+            for(int i = col+1; i < rookCol; i++)
+            {
+                if((copyOfGrid[row][i]) != null) return false;
+            }
+        }
+        return true;
     }
 
     public static boolean inBounds(int row, int col)

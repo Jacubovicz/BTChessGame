@@ -22,12 +22,12 @@ public class Rook extends Figure{
         return offsets;
     }
 
-    public void setMoved()
+    public void setDidMove()
     {
         this.moved = true;
     }
 
-    public boolean getMoved()
+    public boolean didMove()
     {
         return moved;
     }

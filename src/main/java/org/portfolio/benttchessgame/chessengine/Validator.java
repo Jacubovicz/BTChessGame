@@ -1,11 +1,13 @@
 package org.portfolio.benttchessgame.chessengine;
 
+import UILogic.helperclasses.EnumColors;
 import org.portfolio.benttchessgame.chessengine.listeners.AvailableMovesChangeListener;
 import org.portfolio.benttchessgame.figures.Figure;
 import org.portfolio.benttchessgame.figures.King;
 import org.portfolio.benttchessgame.figures.Pawn;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Validator {
@@ -16,7 +18,11 @@ public class Validator {
 
     private Figure[][] originalGrid;
     private Figure[][] snapshotGrid;
-    private ArrayList<Cell> possibleMoves;
+    private ArrayList<Cell> possibleMoves; //!!!!!
+
+    private HashMap<EnumColors, ArrayList<Cell>> paletteMap; /*this is the map which will transfer colors and according values which should
+                                                               be painted accordingly to it
+                                                                */
 
     private ArrayList<Cell> fieldsToCheck; //this is only for the use of MoveEvaluation
 
@@ -29,23 +35,38 @@ public class Validator {
 
     public ArrayList<Cell> checkMoves(Cell initialCell)
     {
+        //new code start
+        this.paletteMap = new HashMap<>();
+        paletteMap.computeIfAbsent(EnumColors.YELLOW, k-> new ArrayList<>()).add(initialCell);
+        //new code end
         snapshotGrid = currentGame.getSnapshot();
         Figure piece = snapshotGrid[initialCell.getRow()][initialCell.getCol()];
 
         if(piece == null)
         {
             possibleMoves = new ArrayList<>();
+            //new code start
+            paletteMap.computeIfAbsent(EnumColors.GREEN, k -> possibleMoves);
+            //new code end
             return null;
         }
         possibleMoves = new ArrayList<>();
+        //new code start
+        paletteMap.computeIfAbsent(EnumColors.GREEN, k -> possibleMoves);
+        //new code end
 
         for(int[] offset : piece.getOffset())
         {
             addMovesInDirection(initialCell.getRow(), initialCell.getCol(), offset[0], offset[1], piece);
         }
 
+
         checkForCheckmate(possibleMoves, initialCell, snapshotGrid);
 
+        //new code start
+        //paletteMap.computeIfAbsent(EnumColors.GREEN, k -> possibleMoves);
+        paletteMap.put(EnumColors.GREEN, possibleMoves);
+        //new code end
         notifyAvlMovesListeners();
 
         return null;
@@ -55,6 +76,7 @@ public class Validator {
     {
         int indexToRemove = 0;
         ArrayList<Cell> cellsToBeRemoved = new ArrayList<>();
+
         for(Cell cell : possibleMoves)
         {
             Figure[][] localSnapshotCopy = cloneArray(snapshotGrid);
@@ -161,7 +183,7 @@ public class Validator {
 
                 if(!(piece.doesSlide()))
                 {
-                    this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame);
+                    this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
                     return;
                 }
             }
@@ -179,13 +201,13 @@ public class Validator {
                         ((Pawn) piece).setLocked();
                     }
                 }
-                this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame);
+                this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
                 return;
             }
             r += rowOff;
             c += colOff;
         }
-        this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame);
+        this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
     }
 
     private boolean isEnemy(Figure fig1, Figure fig2)
@@ -208,7 +230,7 @@ public class Validator {
     {
         for(AvailableMovesChangeListener listener : avlMovesListeners)
         {
-            listener.onMovesChangeEvent(possibleMoves);
+            listener.onMovesChangeEvent(paletteMap);
         }
     }
 }

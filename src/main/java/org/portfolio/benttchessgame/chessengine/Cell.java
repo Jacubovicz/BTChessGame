@@ -1,11 +1,14 @@
 package org.portfolio.benttchessgame.chessengine;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class Cell {
 
     //final row and column of this specific cell.
     private final int row,col;
+
+    private Cell castlingRookie = null;
 
     public Cell(int row, int col)
     {
@@ -40,4 +43,6 @@ public class Cell {
     {
         return Objects.hash(getRow(), getCol());
     }
+
+
 }

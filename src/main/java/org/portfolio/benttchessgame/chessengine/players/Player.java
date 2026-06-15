@@ -2,12 +2,11 @@ package org.portfolio.benttchessgame.chessengine.players;
 
 import org.portfolio.benttchessgame.chessengine.MoveOperation;
 
+import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class Player {
-
-
 
    private final String name;
    private boolean color;
@@ -16,8 +15,6 @@ public abstract class Player {
 
    public final boolean WHITE = true;
    public final boolean BLACK = false;
-
-
 
   /* protected*/ Player(String name)
    {
@@ -48,22 +45,15 @@ public abstract class Player {
 
    public MoveOperation performMove()
    {
-       boolean movementPerformed = false;
-       MoveOperation operation = null;
+       MoveOperation operation = this.movements.poll();
 
-      while(movementPerformed == false)
-      {
-          if(!movements.isEmpty())
-          {
-              movementPerformed = true;
-              operation = this.movements.poll();
-          }
-
-      }
 
     return operation;
    }
 
-   //The more suitable name would be publishMove
-   public abstract void publishMove(MoveOperation operation);
+
+   public void publishMoves(Queue<MoveOperation> operations)
+   {
+       this.movements = operations;
+   }
 }

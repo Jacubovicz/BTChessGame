@@ -4,6 +4,10 @@ import org.portfolio.benttchessgame.chessengine.players.BasePlayer;
 import org.portfolio.benttchessgame.chessengine.players.Player;
 import org.portfolio.benttchessgame.figures.King;
 
+import java.util.ArrayList;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 
 public class ChessEngine{
 
@@ -11,16 +15,25 @@ public class ChessEngine{
     Player player1, player2;
     Validator validator;
     MoveEvaluator simulator;
+    Session gameSession;
 
+    //test code start
+    boolean turn;
+    //test code end
 
     public ChessEngine()
     {
-        Player player1= new BasePlayer("Kuba");
-        Player player2 = new BasePlayer("Kinga");
+        this.player1= new BasePlayer("Kuba"); //for tests
+        this.player2 = new BasePlayer("Kinga"); //for tests
 
-        currentGame = new Game(player1, player2);
+        this.gameSession = new Session(player1, player2);
+
+        currentGame = new Game(gameSession);
+        gameSession.setCurrentGame(currentGame);
         this.validator = new Validator(currentGame);
         this.simulator = new MoveEvaluator(validator);
+
+        this.turn = player1.getColor() ? player1.getColor() : player2.getColor();
     }
 
     public Validator getValidator()
@@ -37,7 +50,9 @@ public class ChessEngine{
     {
         this.player1 = player1;
         this.player2 = player2;
-        currentGame = new Game(player1, player2);
+        this.gameSession = new Session(player1, player2);
+
+        currentGame = new Game(gameSession);
 
         System.out.print("Succesfully initialized new game for:\n " + player1.getName() + "\n" + player2.getName());
     }
@@ -50,20 +65,25 @@ public class ChessEngine{
 
     public void moveTheFigure(MoveOperation operation)
     {
+        Queue<MoveOperation> moveOperationList = new ConcurrentLinkedQueue<>();
         if(currentGame.getSnapshot()[operation.getInitCell().getRow()][operation.getInitCell().getCol()] instanceof King k)
         {
             if(k.getCastling() != null)
             {
-                currentGame.move(k.getCastling());
+                moveOperationList.add(k.getCastling());
                 k.setCastling(null);
             }
         }
-        currentGame.move(operation);
+
+        moveOperationList.add(operation);
+        boolean currentTurn = currentGame.currentSession.getTurn();
+
+        this.gameSession.publishMoves(moveOperationList);
 
     }
 
     public void resetTheGame()
     {
-        currentGame = new Game(player1, player2);
+        currentGame = new Game(new Session(player1, player2));
     }
 }

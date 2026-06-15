@@ -17,10 +17,7 @@ public class BasePlayer extends Player{
         super("BasePlayer " + name);
     }
 
-    @Override
-    public void publishMove(MoveOperation operation) {
-        super.getMovements().offer(operation);
-    }
+
 
 
 }

@@ -11,9 +11,5 @@ public class ServerPlayer extends Player{
         super(name);
     }
 
-    @Override
-    public void publishMove(MoveOperation operation) {
-
-    }
 
 }

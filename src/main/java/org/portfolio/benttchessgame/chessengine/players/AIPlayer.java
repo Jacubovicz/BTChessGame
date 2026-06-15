@@ -14,8 +14,4 @@ public class AIPlayer extends Player{
         super("AIPlayer: " + name);
     }
 
-    @Override
-    public void publishMove(MoveOperation operation) {
-
-    }
 }

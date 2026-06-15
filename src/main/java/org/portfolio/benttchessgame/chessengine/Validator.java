@@ -18,14 +18,11 @@ public class Validator {
 
     private Figure[][] originalGrid;
     private Figure[][] snapshotGrid;
-    private ArrayList<Cell> possibleMoves; //!!!!!
+    private ArrayList<Cell> possibleMoves;
 
     private HashMap<EnumColors, ArrayList<Cell>> paletteMap; /*this is the map which will transfer colors and according values which should
                                                                be painted accordingly to it
                                                                 */
-
-    private ArrayList<Cell> fieldsToCheck; //this is only for the use of MoveEvaluation
-
 
     public Validator(Game currentGame)
     {
@@ -35,38 +32,33 @@ public class Validator {
 
     public ArrayList<Cell> checkMoves(Cell initialCell)
     {
-        //new code start
         this.paletteMap = new HashMap<>();
         paletteMap.computeIfAbsent(EnumColors.YELLOW, k-> new ArrayList<>()).add(initialCell);
-        //new code end
         snapshotGrid = currentGame.getSnapshot();
         Figure piece = snapshotGrid[initialCell.getRow()][initialCell.getCol()];
 
         if(piece == null)
         {
             possibleMoves = new ArrayList<>();
-            //new code start
             paletteMap.computeIfAbsent(EnumColors.GREEN, k -> possibleMoves);
-            //new code end
+
             return null;
         }
         possibleMoves = new ArrayList<>();
-        //new code start
         paletteMap.computeIfAbsent(EnumColors.GREEN, k -> possibleMoves);
-        //new code end
 
         for(int[] offset : piece.getOffset())
         {
             addMovesInDirection(initialCell.getRow(), initialCell.getCol(), offset[0], offset[1], piece);
         }
-
+        //test code start
+        this.possibleMoves = RuleApplicator.apply(initialCell.getRow(), initialCell.getCol(), possibleMoves, snapshotGrid, currentGame, paletteMap);
+        //test code end
 
         checkForCheckmate(possibleMoves, initialCell, snapshotGrid);
 
-        //new code start
-        //paletteMap.computeIfAbsent(EnumColors.GREEN, k -> possibleMoves);
         paletteMap.put(EnumColors.GREEN, possibleMoves);
-        //new code end
+
         notifyAvlMovesListeners();
 
         return null;
@@ -183,7 +175,7 @@ public class Validator {
 
                 if(!(piece.doesSlide()))
                 {
-                    this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
+                 //   this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
                     return;
                 }
             }
@@ -201,13 +193,13 @@ public class Validator {
                         ((Pawn) piece).setLocked();
                     }
                 }
-                this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
+              //  this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
                 return;
             }
             r += rowOff;
             c += colOff;
         }
-        this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
+      // this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
     }
 
     private boolean isEnemy(Figure fig1, Figure fig2)

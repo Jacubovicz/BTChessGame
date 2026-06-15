@@ -29,6 +29,8 @@ public class GameViewController {
 
     MoveOperation operation = new MoveOperation();
 
+    boolean[][] clickableFields;
+
     @FXML
     GridPane chessBoard;
 
@@ -111,6 +113,8 @@ public class GameViewController {
 
     public void activateTheFields(boolean[][] starterMoves)
     {
+        clickableFields = starterMoves;
+
         for(int row = 0; row < starterMoves.length; row++)
         {
             for(int col = 0; col < starterMoves[row].length; col++)

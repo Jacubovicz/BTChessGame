@@ -22,19 +22,34 @@ public final class RuleApplicator {
         ArrayList<Cell> adjustedList = (ArrayList<Cell>) possibleMoves.clone();
 
         Figure f = grid[row][col];
+        Figure left=null,right=null;
+        if(col > 0)
+        {
+            left = grid[row][col-1];
+        }
+        if(col<7)
+        {
+            right = grid[row][col+1];
+        }
 
         if(f instanceof King k && !k.didMove())
         {
-            //for now I am going to add adjustedList into the parameter. It needs to be refactored later.
             checkCastlings(k, row, col, grid, allMarkedCells, currentGame);
         }
         if(f instanceof Pawn p)
         {
-            if(p.isEnpassantPossible())
+            if(!p.isFirstMove())
             {
-                adjustedList.add(p.getEnpassantCell());
-                currentGame.setStarterMoves(p.getEnpassantCell().getRow(), p.getEnpassantCell().getCol(),true);
-
+                if(left instanceof Pawn leftP && f.getColor() != leftP.getColor() && leftP.isEnpassantPossible(currentGame.currentSession))
+                {
+                    adjustedList.add(new Cell(row - leftP.getVector(), col-1));
+                    currentGame.setStarterMoves(row - leftP.getVector(), col-1,true);
+                }
+                else if(right instanceof Pawn rightP && f.getColor() != rightP.getColor() && rightP.isEnpassantPossible(currentGame.currentSession))
+                {
+                    adjustedList.add(new Cell(row - rightP.getVector(), col+1));
+                    currentGame.setStarterMoves(row- rightP.getVector(), col+1, true);
+                }
             }
 
          for(int[] offset : p.getBeatingOffset())

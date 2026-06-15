@@ -88,7 +88,7 @@ public class PieceBoardManager {
 
     }
 
-    public void move(MoveOperation moveOperation, boolean turn)
+    public void move(MoveOperation moveOperation, Session currentSession)
     {
         Cell from = moveOperation.getInitCell();
         Cell to = moveOperation.getDestCell();
@@ -104,55 +104,28 @@ public class PieceBoardManager {
 
             if(f instanceof Pawn p)
             {
-                p.incTheRank();
-                if(p.isEnpassantPossible() && to.equals(p.getEnpassantCell()))
+                int diff = from.getCol() > to.getCol() ? -1 : 1;
+                Figure enpassant = board[from.getRow()][from.getCol() + diff];
+                if(enpassant != null && board[from.getRow()][from.getCol() + diff] instanceof Pawn capturedPawn && capturedPawn.getColor() != p.getColor())
                 {
-                    piecesOnBoard[to.getRow() - p.getVector()][to.getCol()] = null;
+                    Cell cell = new Cell(from.getRow(), from.getCol() + diff);
+                    if(capturedPawn.isEnpassantPossible(currentSession)) this.kill(cell);
                 }
-                p.setEnpassant(null); // test code
+
+                p.incTheRank();
                 if(Math.abs(from.getRow() - to.getRow()) == 2)
                 {
                     p.incTheRank();
-                    checkForEnPassants(to, (Pawn) f);
+                    p.setEnpassantPossible(currentSession);
                 }
                 p.disableFirstMove(); //This is special case for the Pawn.
                 if(p.getRank() == 7)
                 {
                     promotePawn(new Queen(p.getColor()), to.getRow(), to.getCol());
                 }
+
             }
-
-            fillTheStarterMoves(!turn);
-
         }
-    }
-
-    public void checkForEnPassants(Cell cell, Pawn movedPawn)
-    {
-        int leftCol = cell.getCol() - 1;
-        int rightCol = cell.getCol() + 1;
-        Figure leftFigure = null, rightFigure = null;
-
-        if(leftCol >= 0)
-        {
-            leftFigure = piecesOnBoard[cell.getRow()][leftCol];
-        }
-        if(rightCol <= 7)
-        {
-            rightFigure = piecesOnBoard[cell.getRow()][rightCol];
-        }
-
-        Cell enPassantCell = new Cell(cell.getRow() - movedPawn.getVector(), cell.getCol());
-
-        if(leftFigure != null && leftFigure instanceof Pawn p)
-        {
-            p.setEnpassant(enPassantCell);
-        }
-        if(rightFigure != null && rightFigure instanceof Pawn p)
-        {
-            p.setEnpassant(enPassantCell);
-        }
-
     }
 
     private void promotePawn(Figure fig, int row, int col)

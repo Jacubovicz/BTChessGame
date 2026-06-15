@@ -1,6 +1,7 @@
 package org.portfolio.benttchessgame.figures;
 
 import org.portfolio.benttchessgame.chessengine.Cell;
+import org.portfolio.benttchessgame.chessengine.Session;
 
 public class Pawn extends Figure{
 
@@ -16,7 +17,8 @@ public class Pawn extends Figure{
     private boolean firstMove = true;
     private boolean isLocked = false;
 
-    private Cell enpassant = null;
+    private boolean enpassantPossible = false;
+    private int enpassantTurn;
 
     public Pawn(boolean color) {
         super(color);
@@ -44,20 +46,18 @@ public class Pawn extends Figure{
         }
     }
 
-    public void setEnpassant(Cell cell)
+    public void setEnpassantPossible(Session currentSession)
     {
-        this.enpassant = cell;
+        this.enpassantPossible = true;
+        this.enpassantTurn = currentSession.getTurnCounter();
+
     }
 
-    public boolean isEnpassantPossible()
+    public boolean isEnpassantPossible(Session currentSession)
     {
-        return enpassant != null ? true : false;
+        return currentSession.getTurnCounter() - this.enpassantTurn == 1;
     }
 
-    public Cell getEnpassantCell()
-    {
-        return enpassant;
-    }
 
     public void incTheRank()
     {
@@ -112,6 +112,6 @@ public class Pawn extends Figure{
 
     public void disableEnpassant()
     {
-        this.enpassant = null;
+        this.enpassantPossible= false;
     }
 }

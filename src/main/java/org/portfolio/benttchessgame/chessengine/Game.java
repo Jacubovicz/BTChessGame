@@ -10,7 +10,6 @@ import org.portfolio.benttchessgame.figures.Figure;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class Game {
 
@@ -19,37 +18,32 @@ public class Game {
     Session currentSession;
     // Sessions will have data about time, special rules (en passant) available for players, move counter
 
+
+
     Figure[][] snapshot;
 
     Player p1, p2;
 
     boolean turn;
 
-    Random random = new Random();
-
     List<BoardChangedListener> listeners = new ArrayList<>();
 
     List<StarterMovesAvailableListener> starterListeners = new ArrayList<>();
 
-    public Game(Player player1, Player player2)
-    {
-        this.p1 = player1;
-        this.p2 = player2;
 
-        this.turn = random.nextBoolean(); //this only assigns the colors of the players, not the turn
-        player1.setColor(turn);
-        player2.setColor(!turn);
+    public Game(Session gameSession)
+    {
+        this.p1 = gameSession.getPlayer1();
+        this.p2 = gameSession.getPlayer2();
 
         this.currentPieceBoard = new PieceBoard();
         this.pieceBoardManager = new PieceBoardManager(currentPieceBoard);
 
         snapshot = currentPieceBoard.getSnapshot();
 
-        // test code start
-         this.currentSession = new Session();
+         this.currentSession = gameSession;
          this.turn = currentSession.getTurn();
-        // test code end
-
+       //  new MoveConsumerThread(this.p1, this.p2, this);
     }
 
     public PieceBoardManager getPieceBoardManager()
@@ -73,11 +67,19 @@ public class Game {
         notifyStarterMovesListeners();
     }
 
-    public void move(MoveOperation moveOperation)
+    /*
+    The switchTurn parameter in here is responsible in notifying the system if the turn
+    should have been changed after the current movement.
+     */
+    public void move(MoveOperation moveOperation, boolean switchTurn)
     {
-        pieceBoardManager.move(moveOperation, turn);
-        currentSession.switchTurn();
-        this.turn = currentSession.getTurn();
+        pieceBoardManager.move(moveOperation, this.currentSession);
+        if(switchTurn)
+        {
+            currentSession.switchTurn();
+            this.turn = currentSession.getTurn();
+            pieceBoardManager.fillTheStarterMoves(turn);
+        }
         notifyListeners();
         notifyStarterMovesListeners();
     }

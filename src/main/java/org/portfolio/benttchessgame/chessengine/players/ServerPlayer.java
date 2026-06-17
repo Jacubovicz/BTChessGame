@@ -10,6 +10,4 @@ public class ServerPlayer extends Player{
     {
         super(name);
     }
-
-
 }

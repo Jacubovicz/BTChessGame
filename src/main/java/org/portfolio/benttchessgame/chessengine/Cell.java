@@ -35,7 +35,6 @@ public class Cell {
 
         Cell cell = (Cell) o;
         return row == cell.getRow() && col == cell.getCol();
-
     }
 
     @Override
@@ -43,6 +42,4 @@ public class Cell {
     {
         return Objects.hash(getRow(), getCol());
     }
-
-
 }

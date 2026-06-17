@@ -4,27 +4,25 @@ import org.portfolio.benttchessgame.chessengine.players.BasePlayer;
 import org.portfolio.benttchessgame.chessengine.players.Player;
 import org.portfolio.benttchessgame.figures.King;
 
-import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 public class ChessEngine{
 
-    Game currentGame;
-    Player player1, player2;
-    Validator validator;
-    MoveEvaluator simulator;
-    Session gameSession;
+    private Game currentGame;
+    private Player player1, player2;
+    private Validator validator;
+    private MoveEvaluator simulator;
+    private Session gameSession;
 
-    //test code start
-    boolean turn;
-    //test code end
+    private boolean turn;
+
 
     public ChessEngine()
     {
-        this.player1= new BasePlayer("Kuba"); //for tests
-        this.player2 = new BasePlayer("Kinga"); //for tests
+        this.player1= new BasePlayer("Kuba");
+        this.player2 = new BasePlayer("Kinga");
 
         this.gameSession = new Session(player1, player2);
 

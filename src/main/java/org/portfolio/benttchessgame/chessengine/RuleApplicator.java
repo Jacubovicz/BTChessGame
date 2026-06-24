@@ -17,9 +17,9 @@ public final class RuleApplicator {
         throw new UnsupportedOperationException("This class is only for rule application.");
     }
 //What is actually the role of starterMoves?
-    public static ArrayList<Cell> apply(int row, int col, ArrayList<Cell> possibleMoves, Figure[][] grid, Game currentGame, HashMap<EnumColors, ArrayList<Cell>> allMarkedCells)
+    public static ArrayList<Cell> apply(int row, int col, ArrayList<Cell> possibleMoves, Figure[][] grid, Session currentSession, HashMap<EnumColors, ArrayList<Cell>> allMarkedCells)
     {
-        ArrayList<Cell> adjustedList = (ArrayList<Cell>) possibleMoves.clone();
+        ArrayList<Cell> adjustedList = (ArrayList<Cell>) possibleMoves.clone();//available moves (GREEN)
 
         Figure f = grid[row][col];
         Figure left=null,right=null;
@@ -34,21 +34,21 @@ public final class RuleApplicator {
 
         if(f instanceof King k && !k.didMove())
         {
-            checkCastlings(k, row, col, grid, allMarkedCells, currentGame);
+            checkCastlings(k, row, col, grid, allMarkedCells);
         }
         if(f instanceof Pawn p)
         {
             if(!p.isFirstMove())
             {
-                if(left instanceof Pawn leftP && f.getColor() != leftP.getColor() && leftP.isEnpassantPossible(currentGame.currentSession))
+                if(left instanceof Pawn leftP && f.getColor() != leftP.getColor() && leftP.isEnpassantPossible(currentSession))
                 {
                     adjustedList.add(new Cell(row - leftP.getVector(), col-1));
-                    currentGame.setStarterMoves(row - leftP.getVector(), col-1,true);
+                    allMarkedCells.computeIfAbsent(EnumColors.BLANK, func -> new ArrayList<>()).add(new Cell(row - leftP.getVector(), col-1));
                 }
-                else if(right instanceof Pawn rightP && f.getColor() != rightP.getColor() && rightP.isEnpassantPossible(currentGame.currentSession))
+                else if(right instanceof Pawn rightP && f.getColor() != rightP.getColor() && rightP.isEnpassantPossible(currentSession))
                 {
                     adjustedList.add(new Cell(row - rightP.getVector(), col+1));
-                    currentGame.setStarterMoves(row- rightP.getVector(), col+1, true);
+                    allMarkedCells.computeIfAbsent(EnumColors.BLANK, func -> new ArrayList<>()).add(new Cell(row- rightP.getVector(), col+1));
                 }
             }
 
@@ -64,19 +64,26 @@ public final class RuleApplicator {
                  if(target != null && p.getColor() != target.getColor())
                  {
                      adjustedList.add(new Cell(row + rowOffset, col + colOffset));
-                     currentGame.setStarterMoves(row+rowOffset,col+colOffset, true);
+                     allMarkedCells.computeIfAbsent(EnumColors.BLANK, func -> new ArrayList<>()).add(new Cell(row+rowOffset,col+colOffset));
 
                  }
              }
 
          }
         }
+
         return adjustedList;
     }
 
-      private static void checkCastlings(King k, int row, int col, Figure[][] grid, HashMap<EnumColors, ArrayList<Cell>> allMarkedCells, Game currentGame)
+    public static boolean checkTheGameFinished(Figure[][] piecesOnBoard)
+    {
+        return false;
+    }
+
+      private static void checkCastlings(King k, int row, int col, Figure[][] grid, HashMap<EnumColors, ArrayList<Cell>> allMarkedCells)
       {
           int[] columnIndexesOfRook = {0, 7};
+          ArrayList<Cell> blueFields = new ArrayList<>();
           for(int columnOfARook : columnIndexesOfRook)
           {
               if(grid[row][columnOfARook] instanceof Rook r && !r.didMove())
@@ -85,13 +92,14 @@ public final class RuleApplicator {
                   {
                       var expression = col > columnOfARook ? col-2 : col+2; //this defines the way in which is moving
                       var expressionForRookMovement = col > columnOfARook ? col-1 : col+1;
-                      allMarkedCells.computeIfAbsent(EnumColors.BLUE, func -> new ArrayList<>()).add(new Cell(row, expression));
-                      currentGame.setStarterMoves(row, expression, true);
+                      blueFields.add(new Cell(row, expression));
                       k.setCastling(new MoveOperation(new Cell(row, columnOfARook), new Cell(row, expressionForRookMovement)));
                   }
               }
           }
+          allMarkedCells.put(EnumColors.BLUE, blueFields);
       }
+
 
     private static boolean cellsAreEmptyBetween(int row, int col, int rookCol, Figure[][] copyOfGrid)
     {

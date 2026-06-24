@@ -1,15 +1,16 @@
 package org.portfolio.benttchessgame.chessengine;
 
+import java.util.Objects;
+
 public class MoveConsumerThread extends Thread{
 
-    Game currentGame;
+    PieceBoardManager pieceBoardManager;
     Session currentSession;
 
-    public MoveConsumerThread(Session session)
+    public MoveConsumerThread(Session session, PieceBoardManager pieceBoardManager)
     {
         this.currentSession = session;
-        this.currentGame = session.getCurrentGame();
-
+        this.pieceBoardManager = pieceBoardManager;
         this.start();
     }
 
@@ -22,11 +23,13 @@ public class MoveConsumerThread extends Thread{
               int size = currentSession.getOperationQueue().size();
               if(size > 1)
               {
-                  currentGame.move(currentSession.getOperationQueue().poll(), false);
+                  pieceBoardManager.move(Objects.requireNonNull(currentSession.getOperationQueue().poll()), currentSession,true);
               }
               else
               {
-                  currentGame.move(currentSession.getOperationQueue().poll(), true);
+                  pieceBoardManager.move(Objects.requireNonNull(currentSession.getOperationQueue().poll()), currentSession, true);
+                  currentSession.switchTurn();
+                  pieceBoardManager.fillTheStarterMoves(currentSession.getTurn());
               }
           }
       }

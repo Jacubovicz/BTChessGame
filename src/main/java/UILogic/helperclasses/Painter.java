@@ -7,9 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static UILogic.helperclasses.EnumColors.GREEN;
-import static UILogic.helperclasses.EnumColors.YELLOW;
-
 public class Painter {
 
 
@@ -17,16 +14,13 @@ public class Painter {
     private final StackPane[][] gameBoard; //grid
     private final ArrayList<StackPane> cleanupBuffer = new ArrayList<>();
 
-  //  private ArrayList<Cell> avlMoves;// cells marked as green
     private HashMap<EnumColors, ArrayList<Cell>> allMoves;
 
     private ArrayList<Cell> avlMovesCells;
     private ArrayList<Cell> clickedMovedCells;
     private ArrayList<Cell> checkmateCells;
     private ArrayList<Cell> castlingCell;
-    //test code start
-    //private HashMap<EnumColors, ArrayList<Cell>> cellsToPaint;
-    //test code end
+    private ArrayList<Cell> clickableFields;
 
     Map<Styles, String> stylesMap; // styles enum
 
@@ -40,7 +34,6 @@ public class Painter {
         StackPane stP1 = gameBoard[cell.getRow()][cell.getCol()];
         paint(Styles.CLICKED_MOVED_STYLE, stP1);
         cleanupBuffer.add(stP1); //This needs to be cleaned with new iteration
-
     }
 
     public void cleanTheBuffer() // removing the coulours from the board.
@@ -60,6 +53,7 @@ public class Painter {
        avlMovesCells = new ArrayList<>();
        checkmateCells = new ArrayList<>();
        clickedMovedCells = new ArrayList<>();
+       clickableFields = new ArrayList<>();
 
 
        stylesMap = Map.of(Styles.AVL_STYLE, "-fx-border-color: green; -fx-border-width:5px;",
@@ -81,8 +75,6 @@ public class Painter {
 
    private void paint(Styles s, ArrayList<Cell> cellsToPaint)
    {
-      // this.avlMoves = avlMoves;
-
        for(Cell c : cellsToPaint)
        {
            if(c != null)
@@ -93,8 +85,6 @@ public class Painter {
        }
    }
 
-
-//the area of interest start
    public void paintAvlMoves(HashMap<EnumColors, ArrayList<Cell>> allMoves)
    {
        this.allMoves = allMoves;
@@ -102,9 +92,17 @@ public class Painter {
        for(EnumColors color : allMoves.keySet())
        {
            ArrayList<Cell> listToPaint = allMoves.get(color);
+           if(color == EnumColors.BLANK)
+           {
+               setClickableFields(clickableFields, true);
+               this.clickableFields = listToPaint;
+               setClickableFields(clickableFields, false);
+           }
            if(color == EnumColors.GREEN)
            {
+               setClickableFields(avlMovesCells, true);
                this.avlMovesCells = listToPaint;
+               setClickableFields(avlMovesCells, false);
                paint(Styles.AVL_STYLE, avlMovesCells);
            }
            if(color == EnumColors.RED)
@@ -119,10 +117,23 @@ public class Painter {
            }
            if(color == EnumColors.BLUE)
            {
+               if(castlingCell != null) setClickableFields(castlingCell, true);
                this.castlingCell = listToPaint;
+               setClickableFields(castlingCell, false);
                paint(Styles.CASTLING_STYLE, castlingCell);
            }
        }
+   }
+
+   private void setClickableFields(ArrayList<Cell> clickableFields, boolean disable)
+   {
+      for(Cell cell : clickableFields)
+      {
+          if(cell != null)
+          {
+              gameBoard[cell.getRow()][cell.getCol()].setDisable(disable);
+          }
+      }
    }
 
    public void paintClickedOrMoved(int row, int col)

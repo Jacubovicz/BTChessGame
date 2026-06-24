@@ -18,6 +18,12 @@ public class PieceBoard {
         piecesOnBoard = new Figure[GRID_SIZE][GRID_SIZE];
     }
 
+    private PieceBoard(PieceBoard pieceBoard)
+    {
+        this.piecesOnBoard = pieceBoard.getPiecesOnBoard();
+        this.starterMovesAvailable = pieceBoard.getStarterMovesAvailable();
+    }
+
     public boolean[][] getStarterMovesAvailable()
     {
         return this.starterMovesAvailable;
@@ -28,6 +34,7 @@ public class PieceBoard {
         return this.piecesOnBoard;
     }
 
+    /*
     public Figure[][] getSnapshot()
     {
 
@@ -40,6 +47,12 @@ public class PieceBoard {
 
        return snapshot;
     }
+    */
 
+
+    public PieceBoard getSnapshot()
+    {
+        return new PieceBoard(this);
+    }
 }
 

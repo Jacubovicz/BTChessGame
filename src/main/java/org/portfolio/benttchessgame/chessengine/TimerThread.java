@@ -1,11 +1,13 @@
 package org.portfolio.benttchessgame.chessengine;
 
+import org.portfolio.benttchessgame.chessengine.events.OnTimeChangeEvent;
+import org.portfolio.benttchessgame.chessengine.helperclasses.GameEventBus;
 import org.portfolio.benttchessgame.chessengine.listeners.TimeChangeListener;
 import java.util.List;
 
 public class TimerThread extends Thread{
 
-    String time;
+    private String time;
     List<TimeChangeListener> listeners;
     public TimerThread(String time, List<TimeChangeListener> listeners)
     {
@@ -47,9 +49,6 @@ public class TimerThread extends Thread{
 
     public void notifyTimerListeners()
     {
-        for(TimeChangeListener listener : listeners)
-        {
-            listener.onTimeChange(time);
-        }
+        GameEventBus.getInstance().publishEvent(new OnTimeChangeEvent(time));
     }
 }

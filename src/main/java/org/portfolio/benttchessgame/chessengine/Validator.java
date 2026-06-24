@@ -1,70 +1,57 @@
 package org.portfolio.benttchessgame.chessengine;
 
 import UILogic.helperclasses.EnumColors;
-import org.portfolio.benttchessgame.chessengine.listeners.AvailableMovesChangeListener;
 import org.portfolio.benttchessgame.figures.Figure;
 import org.portfolio.benttchessgame.figures.King;
 import org.portfolio.benttchessgame.figures.Pawn;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
-public class Validator {
 
-    Game currentGame;
+public final class Validator {
 
-    List<AvailableMovesChangeListener> avlMovesListeners = new ArrayList<>();
+    private Validator(){};
 
-    private Figure[][] originalGrid;
-    private Figure[][] snapshotGrid;
-    private ArrayList<Cell> possibleMoves;
-
-    private HashMap<EnumColors, ArrayList<Cell>> paletteMap; /*this is the map which will transfer colors and according values which should
-                                                               be painted accordingly to it
-                                                                */
-
-    public Validator(Game currentGame)
+    public static HashMap<EnumColors, ArrayList<Cell>> checkMoves(int row, int col, PieceBoard pieceBoard, PieceBoardManager pieceBoardManager, Session currentSession, HashMap<EnumColors, ArrayList<Cell>> paletteMap)
     {
-        this.currentGame = currentGame;
-        this.originalGrid = currentGame.getSnapshot();
-    }
+     //   HashMap<EnumColors, ArrayList<Cell>> paletteMap = new HashMap<>();
+        ArrayList<Cell> possibleMoves;
 
-    public ArrayList<Cell> checkMoves(Cell initialCell)
-    {
-        this.paletteMap = new HashMap<>();
+        Cell initialCell = new Cell(row, col);
         paletteMap.computeIfAbsent(EnumColors.YELLOW, k-> new ArrayList<>()).add(initialCell);
-        snapshotGrid = currentGame.getSnapshot();
+        Figure[][] snapshotGrid = pieceBoard.getSnapshot().getPiecesOnBoard(); //check later
+
         Figure piece = snapshotGrid[initialCell.getRow()][initialCell.getCol()];
 
         if(piece == null)
         {
             possibleMoves = new ArrayList<>();
-            paletteMap.computeIfAbsent(EnumColors.GREEN, k -> possibleMoves);
+            ArrayList<Cell> finalPossibleMoves = possibleMoves;
+            paletteMap.computeIfAbsent(EnumColors.GREEN, k -> finalPossibleMoves);
 
             return null;
         }
         possibleMoves = new ArrayList<>();
-        paletteMap.computeIfAbsent(EnumColors.GREEN, k -> possibleMoves);
+        ArrayList<Cell> finalPossibleMoves1 = possibleMoves;
+        paletteMap.computeIfAbsent(EnumColors.GREEN, k -> finalPossibleMoves1);
 
         for(int[] offset : piece.getOffset())
         {
-            addMovesInDirection(initialCell.getRow(), initialCell.getCol(), offset[0], offset[1], piece);
+            addMovesInDirection(initialCell.getRow(), initialCell.getCol(), offset[0], offset[1], piece, pieceBoard, paletteMap);
         }
-        //test code start
-        this.possibleMoves = RuleApplicator.apply(initialCell.getRow(), initialCell.getCol(), possibleMoves, snapshotGrid, currentGame, paletteMap);
-        //test code end
+        possibleMoves = RuleApplicator.apply(initialCell.getRow(), initialCell.getCol(), possibleMoves, snapshotGrid, currentSession, paletteMap);
 
-        checkForCheckmate(possibleMoves, initialCell, snapshotGrid);
-
+        //ArrayList<Cell> finalPossibleMoves2 = possibleMoves;
+        possibleMoves = checkForCheckmate(possibleMoves, initialCell, snapshotGrid);
         paletteMap.put(EnumColors.GREEN, possibleMoves);
 
-        notifyAvlMovesListeners();
+      //  paletteMap.put(EnumColors.BLANK, pieceBoardManager.fillTheStarterMoves(currentSession.getTurn()));
 
-        return null;
+        return paletteMap;
     }
 
-    private void checkForCheckmate(ArrayList<Cell> possibleMoves, Cell initialCell, Figure[][] snapshotGrid)
+    private static ArrayList<Cell> checkForCheckmate(ArrayList<Cell> possibleMoves, Cell initialCell, Figure[][] snapshotGrid)
     {
         int indexToRemove = 0;
         ArrayList<Cell> cellsToBeRemoved = new ArrayList<>();
@@ -76,7 +63,6 @@ public class Validator {
             localSnapshotCopy[cell.getRow()][cell.getCol()] = potentialMove;
             localSnapshotCopy[initialCell.getRow()][initialCell.getCol()] = null;
 
-
             Cell cellToRemove = lookForKing(localSnapshotCopy, !potentialMove.getColor());
             if(cellToRemove != null)
             {
@@ -85,10 +71,12 @@ public class Validator {
 
             indexToRemove++;
         }
-        this.possibleMoves.removeAll(cellsToBeRemoved);
+        possibleMoves.removeAll(cellsToBeRemoved);
+
+        return possibleMoves;
     }
 
-    private Figure[][] cloneArray(Figure[][] array)
+    private static Figure[][] cloneArray(Figure[][] array)
     {
         Figure[][] copy = new Figure[array.length][array[0].length];
 
@@ -100,7 +88,7 @@ public class Validator {
         return copy;
     }
 
-    private Cell lookForKing(Figure[][] snapshotGrid, boolean enemy)
+    private static Cell lookForKing(Figure[][] snapshotGrid, boolean enemy)
     {
         int r = 0; //row
 
@@ -125,7 +113,7 @@ public class Validator {
                 {
                     int localRowOffset = r + offsets[0];
                     int localColOffset = c + offsets[1];
-                    while(inBounds(localRowOffset, localColOffset))
+                    while(inBounds(localRowOffset, localColOffset, snapshotGrid))
                     {
                         Figure target = snapshotGrid[localRowOffset][localColOffset];
 
@@ -151,7 +139,9 @@ public class Validator {
         return null;
     }
 
-    public void addMovesInDirection(int row, int col, int rowOff, int colOff, Figure piece) {
+    public static void addMovesInDirection(int row, int col, int rowOff, int colOff, Figure piece, PieceBoard pieceBoard, HashMap<EnumColors, ArrayList<Cell>> paletteMap) {
+
+        ArrayList<Cell> possibleMoves = new ArrayList<>();
 
         if(piece instanceof Pawn p)
         {
@@ -164,18 +154,18 @@ public class Validator {
         int r = row + rowOff;
         int c = col + colOff;
 
-        while(inBounds(r,c))
+        while(inBounds(r,c, pieceBoard.getPiecesOnBoard()))
         {
-            Figure target = snapshotGrid[r][c];
+            int finalR = r; int finalC = c;
+            Figure target = pieceBoard.getPiecesOnBoard()[r][c];
 
             if(target == null)
             {
-                possibleMoves.add(new Cell(r,c));
-                currentGame.setStarterMoves(r,c,true);
+                paletteMap.computeIfAbsent(EnumColors.GREEN, k -> new ArrayList<>()).add(new Cell(finalR,finalC));
+                //  currentGame.setStarterMoves(r,c,true);// might be unnecessary
 
                 if(!(piece.doesSlide()))
                 {
-                 //   this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
                     return;
                 }
             }
@@ -185,44 +175,30 @@ public class Validator {
                 {
                     if(!(piece instanceof Pawn))//Pawn can't attack forward.
                     {
-                        possibleMoves.add(new Cell(r,c));
-                        currentGame.setStarterMoves(r,c,true);
+                        paletteMap.computeIfAbsent(EnumColors.GREEN, k -> new ArrayList<>()).add(new Cell(finalR,finalC));
+                    //    currentGame.setStarterMoves(r,c,true);//might be unnecesarry
                     }
                     else
                     {
                         ((Pawn) piece).setLocked();
                     }
                 }
-              //  this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
                 return;
             }
             r += rowOff;
             c += colOff;
         }
-      // this.possibleMoves = RuleApplicator.apply(row, col, possibleMoves, snapshotGrid, currentGame, paletteMap);
     }
 
-    private boolean isEnemy(Figure fig1, Figure fig2)
+    private static boolean isEnemy(Figure fig1, Figure fig2)
     {
         return fig2 != null && fig1.getColor() != fig2.getColor();
     }
 
-    private boolean inBounds(int rowPos, int colPos)
+    private static boolean inBounds(int rowPos, int colPos, Figure[][] originalGrid)
     {
         if(rowPos < 0 || rowPos >= originalGrid.length) return false;
         return colPos >= 0 && colPos < originalGrid.length;
     }
 
-    public void addAvlMovesChangedListener(AvailableMovesChangeListener listener)
-    {
-        avlMovesListeners.add(listener);
-    }
-
-    private void notifyAvlMovesListeners()
-    {
-        for(AvailableMovesChangeListener listener : avlMovesListeners)
-        {
-            listener.onMovesChangeEvent(paletteMap);
-        }
-    }
 }

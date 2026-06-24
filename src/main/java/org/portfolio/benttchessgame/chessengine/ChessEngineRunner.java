@@ -17,7 +17,7 @@ public class ChessEngineRunner implements Runnable{
 
    public ChessEngineRunner()
    {
-       this.engine = new ChessEngine();
+       this.engine = new ChessEngine(new OfflineBridgeImpl());
    }
 
    public ChessEngine getEngine()
@@ -39,9 +39,9 @@ public class ChessEngineRunner implements Runnable{
            {
                EngineCommand command = commands.poll();
 
-               if(command instanceof StartNewGame ng)
+               if(command instanceof StartNewGame)
                {
-                   engine.setTheNewGame(ng.getPlayerOne(), ng.getPlayerTwo());
+                   engine.setTheNewGame();
                }
                else if(command instanceof ProposeMove p)
                {

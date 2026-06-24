@@ -1,5 +1,6 @@
 package UILogic.controllers;
 
+import UILogic.helperclasses.EnumColors;
 import UILogic.helperclasses.Painter;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -16,7 +17,14 @@ import org.portfolio.benttchessgame.chessengine.ChessEngineRunner;
 import org.portfolio.benttchessgame.chessengine.MoveOperation;
 import org.portfolio.benttchessgame.chessengine.commands.MakeMove;
 import org.portfolio.benttchessgame.chessengine.commands.ProposeMove;
+import org.portfolio.benttchessgame.chessengine.events.AvlMovesChangedEvent;
+import org.portfolio.benttchessgame.chessengine.events.BoardChangedEvent;
+import org.portfolio.benttchessgame.chessengine.events.OnTimeChangeEvent;
+import org.portfolio.benttchessgame.chessengine.helperclasses.GameEventBus;
 import org.portfolio.benttchessgame.figures.Figure;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class GameViewController {
@@ -28,6 +36,7 @@ public class GameViewController {
     Painter painter;
 
     MoveOperation operation = new MoveOperation();
+    HashMap<EnumColors, ArrayList<Cell>> paletteMap;
 
     boolean[][] clickableFields;
 
@@ -95,14 +104,9 @@ public class GameViewController {
 
     public void setChessEngine(ChessEngine engine) {
         this.engine = engine;
-
-        engine.getCurrentGame().addBoardChangedListener(
-                board -> Platform.runLater(() -> renderTheBoard(board))
-        );
-
-        renderTheBoard(engine.getCurrentGame().getSnapshot());
-        activateTheFields(engine.getCurrentGame().getStarterMoves());
         wireListeners();
+        renderTheBoard(engine.getSnapshot());
+        engine.fillTheStarterMoves();
     }
 
     public void setChessEngineRunner(ChessEngineRunner engineRunner)
@@ -111,30 +115,13 @@ public class GameViewController {
         setChessEngine(engineRunner.getEngine());
     }
 
-    public void activateTheFields(boolean[][] starterMoves)
-    {
-        clickableFields = starterMoves;
-
-        for(int row = 0; row < starterMoves.length; row++)
-        {
-            for(int col = 0; col < starterMoves[row].length; col++)
-            {
-                gameBoard[row][col].setDisable(true);
-                if(starterMoves[row][col])
-                {
-                    gameBoard[row][col].setDisable(false);
-                }
-            }
-        }
-
-    }
 
     public void wireListeners()
     {
-        engine.getValidator().addAvlMovesChangedListener(avlMoves -> Platform.runLater(()-> painter.paintAvlMoves(avlMoves)));
-        engine.getCurrentGame().addTimeChangeListener((time) -> Platform.runLater(() -> timer.setText(time)));
-        engine.getCurrentGame().addStarterMovesAvailableListener((clickableFields) -> Platform.runLater(() -> activateTheFields(clickableFields)));
-        engine.getCurrentGame().addTurnListener(this::setTurn);
+        GameEventBus eventBus = GameEventBus.getInstance();
+        eventBus.subscribe(AvlMovesChangedEvent.class, event -> Platform.runLater(()-> painter.paintAvlMoves(event.avlMoves())));
+        eventBus.subscribe(BoardChangedEvent.class, event -> Platform.runLater(() -> renderTheBoard(event.board())));
+        eventBus.subscribe(OnTimeChangeEvent.class, event -> Platform.runLater(() -> timer.setText(event.time())));
     }
 
 

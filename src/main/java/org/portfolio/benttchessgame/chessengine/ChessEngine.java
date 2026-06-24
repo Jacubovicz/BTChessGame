@@ -1,87 +1,56 @@
 package org.portfolio.benttchessgame.chessengine;
 
 import org.portfolio.benttchessgame.chessengine.players.BasePlayer;
-import org.portfolio.benttchessgame.chessengine.players.Player;
-import org.portfolio.benttchessgame.figures.King;
-
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
+import org.portfolio.benttchessgame.figures.Figure;
 
 public class ChessEngine{
 
-    private Game currentGame;
-    private Player player1, player2;
-    private Validator validator;
-    private MoveEvaluator simulator;
     private Session gameSession;
+    private GameBridge bridge;
 
-    private boolean turn;
-
-
-    public ChessEngine()
+    public ChessEngine(GameBridge bridge)
     {
-        this.player1= new BasePlayer("Kuba");
-        this.player2 = new BasePlayer("Kinga");
+        this.gameSession = new Session(new BasePlayer("Kuba"), new BasePlayer("Kinga"));
+        this.bridge = bridge;
 
-        this.gameSession = new Session(player1, player2);
-
-        currentGame = new Game(gameSession);
-        gameSession.setCurrentGame(currentGame);
-        this.validator = new Validator(currentGame);
-        this.simulator = new MoveEvaluator(validator);
-
-        this.turn = player1.getColor() ? player1.getColor() : player2.getColor();
+        bridge.initialize(gameSession);
     }
 
-    public Validator getValidator()
+    public void setTheNewGame()
     {
-        return this.validator;
-    }
+        gameSession = new Session(new BasePlayer("Kuba"), new BasePlayer("Kinga"));
 
-    public Game getCurrentGame()
-    {
-        return this.currentGame;
-    }
-
-    public void setTheNewGame(Player player1, Player player2)
-    {
-        this.player1 = player1;
-        this.player2 = player2;
-        this.gameSession = new Session(player1, player2);
-
-        currentGame = new Game(gameSession);
-
-        System.out.print("Succesfully initialized new game for:\n " + player1.getName() + "\n" + player2.getName());
+        bridge.initialize(gameSession);
     }
 
     public void proposeMove(int row, int col)
     {
-        Cell cell = new Cell(row, col);
-        validator.checkMoves(cell);
+        if(bridge != null)
+        {
+            bridge.proposeMove(row, col);
+        }
     }
 
     public void moveTheFigure(MoveOperation operation)
     {
-        Queue<MoveOperation> moveOperationList = new ConcurrentLinkedQueue<>();
-        if(currentGame.getSnapshot()[operation.getInitCell().getRow()][operation.getInitCell().getCol()] instanceof King k)
+        if(bridge != null)
         {
-            if(k.getCastling() != null)
-            {
-                moveOperationList.add(k.getCastling());
-                k.setCastling(null);
-            }
+            bridge.moveTheFigure(operation);
         }
-
-        moveOperationList.add(operation);
-        boolean currentTurn = currentGame.currentSession.getTurn();
-
-        this.gameSession.publishMoves(moveOperationList);
-
     }
 
-    public void resetTheGame()
+    public Figure[][] getSnapshot()
     {
-        currentGame = new Game(new Session(player1, player2));
+        if(bridge != null) return bridge.getSnapshot();
+
+        return null;
+    }
+
+    public void fillTheStarterMoves()
+    {
+        if(bridge != null)
+        {
+            bridge.fillTheStarterMoves();
+        }
     }
 }

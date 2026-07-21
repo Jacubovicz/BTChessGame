@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -9,11 +11,11 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="600.0" minWidth="900.0" prefHeight="700.0" prefWidth="1280.0" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UILogic.controllers.GameViewController">
+<Pane stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UILogic.controllers.GameViewController">
    <children>
-      <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="600.0" minWidth="900.0" prefHeight="700.0" prefWidth="1280.0" styleClass="stack-pane">
+      <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="700.0" minWidth="1366.0" styleClass="stack-pane">
          <children>
-            <AnchorPane id="numberBoxChessBoard" layoutX="340.0" layoutY="50.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="600.0" prefWidth="600.0">
+            <AnchorPane id="numberBoxChessBoard" layoutX="383.0" layoutY="50.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="600.0" prefWidth="600.0">
                <children>
                   <GridPane id="chessBoard" fx:id="chessBoard" hgap="1.0" layoutX="30.0" layoutY="30.0" prefHeight="540.0" prefWidth="540.0" vgap="1.0">
                     <columnConstraints>
@@ -190,6 +192,22 @@
                   <Font size="24.0" />
                </font>
             </Label>
+            <AnchorPane id="playerBoard" layoutX="6.0" layoutY="6.0" prefHeight="160.0" prefWidth="330.0">
+               <children>
+                  <TextField id="nickname_white" fx:id="nickname_white" alignment="CENTER" editable="false" layoutX="124.0" layoutY="14.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="NicknameWhite" />
+                  <TextField id="timeElapsed_white" fx:id="timeElapsed_white" alignment="CENTER" editable="false" layoutX="124.0" layoutY="55.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="TimeElapsed/Past White" />
+                  <ImageView id="whileProfileImage" fx:id="white_player_icon" fitHeight="100.0" fitWidth="100.0" layoutX="8.0" layoutY="30.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView id="whiteTurnIndicator" fx:id="whites_turn_indicator" fitHeight="64.0" fitWidth="64.0" layoutX="250.0" layoutY="86.0" pickOnBounds="true" preserveRatio="true" />
+               </children>
+            </AnchorPane>
+            <AnchorPane layoutX="1030.0" layoutY="6.0" prefHeight="160.0" prefWidth="330.0" style="-fx-border-color: yellow; -fx-border-radius: 10; -fx-background-image: ../images/dark.png;">
+               <children>
+                  <TextField id="nickname_black" fx:id="nickname_black" alignment="CENTER" editable="false" layoutX="16.0" layoutY="14.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="NicknameBlack" />
+                  <TextField id="timeElapsed_black" fx:id="timeElapsed_black" alignment="CENTER" editable="false" layoutX="16.0" layoutY="55.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="TimeElapsed/Past Black" />
+                  <ImageView id="blackProfileImage" fx:id="black_player_icon" fitHeight="100.0" fitWidth="100.0" layoutX="222.0" layoutY="30.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView id="blackTurnIndicator" fx:id="blacks_turn_indicator" fitHeight="64.0" fitWidth="64.0" layoutX="16.0" layoutY="86.0" pickOnBounds="true" preserveRatio="true" />
+               </children>
+            </AnchorPane>
          </children>
       </AnchorPane>
    </children>

@@ -4,161 +4,202 @@ import javafx.scene.layout.StackPane;
 import org.portfolio.benttchessgame.chessengine.Cell;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 public class Painter {
 
-
-
     private final StackPane[][] gameBoard; //grid
-    private final ArrayList<StackPane> cleanupBuffer = new ArrayList<>();
+    private ArrayList<Cell> activeClickableFields  = new ArrayList<>();
 
-    private HashMap<EnumColors, ArrayList<Cell>> allMoves;
-
-    private ArrayList<Cell> avlMovesCells;
-    private ArrayList<Cell> clickedMovedCells;
-    private ArrayList<Cell> checkmateCells;
-    private ArrayList<Cell> castlingCell;
-    private ArrayList<Cell> clickableFields;
+    private final ArrayList<Cell> clickedMovedBuffer = new ArrayList<>();
+    private final ArrayList<Cell> avlMovesColouredBuffer = new ArrayList<>();
+    private final ArrayList<Cell> castlingCells = new ArrayList<>();
 
     Map<Styles, String> stylesMap; // styles enum
 
     public enum Styles
     {
-        AVL_STYLE, ENEMY_STYLE, CLICKED_MOVED_STYLE, CASTLING_STYLE, NO_STYLE;
-    }
-
-    public void addToCleanupBuffer(Cell cell) //This is adding to the list as yellow clicks
-    {
-        StackPane stP1 = gameBoard[cell.getRow()][cell.getCol()];
-        paint(Styles.CLICKED_MOVED_STYLE, stP1);
-        cleanupBuffer.add(stP1); //This needs to be cleaned with new iteration
-    }
-
-    public void cleanTheBuffer() // removing the coulours from the board.
-    {
-        for(StackPane s : cleanupBuffer)
-        {
-            s.setStyle(stylesMap.get(Styles.NO_STYLE));
-        }
-        cleanupBuffer.clear();
+        AVL_STYLE, ENEMY_STYLE, CLICKED_MOVED_STYLE, CASTLING_STYLE, NO_STYLE, CHECKMATE_STYLE;
     }
 
    public Painter(StackPane[][] gameBoard)
    {
        this.gameBoard = gameBoard;
 
-       allMoves = new HashMap<>();
-       avlMovesCells = new ArrayList<>();
-       checkmateCells = new ArrayList<>();
-       clickedMovedCells = new ArrayList<>();
-       clickableFields = new ArrayList<>();
-
-
        stylesMap = Map.of(Styles.AVL_STYLE, "-fx-border-color: green; -fx-border-width:5px;",
                Styles.ENEMY_STYLE, "-fx-border-color: red; -fx-border-width:5px;",
                Styles.CLICKED_MOVED_STYLE, "-fx-border-color: yellow; -fx-border-width: 5px;",
                Styles.CASTLING_STYLE, "-fx-border-color: blue; -fx-border-width: 5px",
+               Styles.CHECKMATE_STYLE, "-fx-border-color: darkred; -fx-border-width: 5px",
                Styles.NO_STYLE, "");
    }
 
-   private void paint(Styles s, StackPane stackPane)
+   private void paint(Styles s, Cell cell)
    {
-       stackPane.setStyle(stylesMap.get(s));
-   }
+       if(s == Styles.CLICKED_MOVED_STYLE)
+       {
+           gameBoard[cell.getRow()][cell.getCol()].setStyle(stylesMap.get(s));
+           clickedMovedBuffer.add(cell);
+       }
 
-   private void paint(Styles s, int row, int col)
-   {
-       gameBoard[row][col].setStyle(stylesMap.get(s));
    }
 
    private void paint(Styles s, ArrayList<Cell> cellsToPaint)
    {
+       if(cellsToPaint.isEmpty()) return;
+
+       ArrayList<Cell> temp = new ArrayList<>();
+
        for(Cell c : cellsToPaint)
        {
            if(c != null)
            {
-               gameBoard[c.getRow()][c.getCol()].setStyle(stylesMap.get(s));
+               if(!clickedMovedBuffer.contains(c))
+               {
+                   if(c.isCastlingCell())
+                   {
+                       gameBoard[c.getRow()][c.getCol()].setStyle(stylesMap.get(Styles.CASTLING_STYLE));
+                       castlingCells.add(c);
+                       continue;
+                   }
+                   gameBoard[c.getRow()][c.getCol()].setStyle(stylesMap.get(s));
+               }
            }
-
+           temp.add(c);
        }
-   }
 
-   public void paintAvlMoves(HashMap<EnumColors, ArrayList<Cell>> allMoves)
-   {
-       this.allMoves = allMoves;
-
-       for(EnumColors color : allMoves.keySet())
+       if(s == Styles.AVL_STYLE)
        {
-           ArrayList<Cell> listToPaint = allMoves.get(color);
-           if(color == EnumColors.BLANK)
+           avlMovesColouredBuffer.addAll(temp);
+       }
+   }
+
+   // the name of a method needs to be changed for "handleAvlMoves"
+   public void paintAvlMoves(ArrayList<Cell> avlMoves)
+   {
+       removePaintAndDisableDelete(avlMovesColouredBuffer);
+       removePaintAndDisableDelete(castlingCells);
+
+       paint(Styles.AVL_STYLE, avlMoves);
+       activateAvlFields(avlMovesColouredBuffer);
+       activateAvlFields(castlingCells);
+   }
+
+   public void removePaintAndDisableDelete(ArrayList<Cell> cellsForRemoval)
+   {
+       for(Cell cell : cellsForRemoval)
+       {
+           if(cell != null && !clickedMovedBuffer.contains(cell))
            {
-               setClickableFields(clickableFields, true);
-               this.clickableFields = listToPaint;
-               setClickableFields(clickableFields, false);
+               int row = cell.getRow();
+               int col = cell.getCol();
+
+               gameBoard[row][col].setStyle(stylesMap.get(Styles.NO_STYLE));
+               gameBoard[row][col].setDisable(true);
            }
-           if(color == EnumColors.GREEN)
+           else if(cell != null && clickedMovedBuffer.contains(cell))
            {
-               setClickableFields(avlMovesCells, true);
-               this.avlMovesCells = listToPaint;
-               setClickableFields(avlMovesCells, false);
-               paint(Styles.AVL_STYLE, avlMovesCells);
+                gameBoard[cell.getRow()][cell.getCol()].setDisable(true);
            }
-           if(color == EnumColors.RED)
+       }
+       cellsForRemoval.clear();
+   }
+
+   public void activateAvlFields(ArrayList<Cell> fields)
+   {
+       if(fields.isEmpty()) return;
+
+       for(Cell field : fields)
+       {
+           if(field != null)
            {
-               this.checkmateCells = listToPaint;
-               paint(Styles.ENEMY_STYLE, checkmateCells);
-           }
-           if(color == EnumColors.YELLOW)
-           {
-               this.clickedMovedCells = listToPaint;
-               paint(Styles.CLICKED_MOVED_STYLE, clickedMovedCells);
-           }
-           if(color == EnumColors.BLUE)
-           {
-               if(castlingCell != null) setClickableFields(castlingCell, true);
-               this.castlingCell = listToPaint;
-               setClickableFields(castlingCell, false);
-               paint(Styles.CASTLING_STYLE, castlingCell);
+               gameBoard[field.getRow()][field.getCol()].setDisable(false);
            }
        }
    }
 
-   private void setClickableFields(ArrayList<Cell> clickableFields, boolean disable)
+   public void setClickableFields(ArrayList<Cell> clickableFields)
    {
+       disableFieldsOf(activeClickableFields);
+       ArrayList<Cell> tempCells = new ArrayList<>();
+
+       /// test only
+       for(int i = 0; i< gameBoard.length; i++)
+       {
+           for(int j = 0; j <gameBoard.length; j++)
+           {
+               gameBoard[i][j].setStyle(stylesMap.get(Styles.NO_STYLE));
+           }
+       }
+       /// end test
+
       for(Cell cell : clickableFields)
       {
           if(cell != null)
           {
-              gameBoard[cell.getRow()][cell.getCol()].setDisable(disable);
+              gameBoard[cell.getRow()][cell.getCol()].setDisable(false);
+              tempCells.add(new Cell(cell.getRow(), cell.getCol()));
+
+              ///  test only
+
+              gameBoard[cell.getRow()][cell.getCol()].setStyle("-fx-border-color: pink; -fx-border-width:5px");
+              /// end test
           }
       }
+      activeClickableFields = new ArrayList<>(tempCells);
    }
 
-   public void paintClickedOrMoved(int row, int col)
+   private void disableFieldsOf(ArrayList<Cell> clickableFields)
    {
-       paint(Styles.CLICKED_MOVED_STYLE, row, col);
-   }
+       if(clickableFields.isEmpty()) return;
 
-   public void removeAvlMvsPaint() //removes only the avlMoves paint
-   {
-       for(EnumColors c : allMoves.keySet())
+       for(Cell c : clickableFields)
        {
-           if(c == EnumColors.GREEN /*|| c == EnumColors.YELLOW*/)
+           if(c != null)
            {
-               paint(Styles.NO_STYLE, allMoves.get(c));
+               gameBoard[c.getRow()][c.getCol()].setDisable(true);
            }
        }
-           allMoves.clear();
+
+       clickableFields.clear();
    }
 
+   public void paintClickedOrMoved(Cell cell) {
+
+       if(clickedMovedBuffer.size() == 2)
+       {
+           cleanTheClickedMovedBufferAndRepaint();
+       }
+       if(isInAvailableMoves(cell.getRow(), cell.getCol()))
+       {
+           paint(Styles.CLICKED_MOVED_STYLE, cell);
+       }
+       else if(clickedMovedBuffer.size() == 1)
+       {
+           cleanTheClickedMovedBufferAndRepaint();
+           paint(Styles.CLICKED_MOVED_STYLE, cell);
+       }
+       else
+           paint(Styles.CLICKED_MOVED_STYLE, cell);
+   }
+
+   public void cleanTheClickedMovedBufferAndRepaint()
+   {
+       for(Cell c : clickedMovedBuffer)
+       {
+           if(c != null) gameBoard[c.getRow()][c.getCol()].setStyle(stylesMap.get(Styles.NO_STYLE));
+       }
+       clickedMovedBuffer.clear();
+   }
 
    public boolean isInAvailableMoves(int row, int col)
    {
        Cell temp = new Cell(row, col);
 
-       return avlMovesCells.contains(temp) || (castlingCell == null ? false : castlingCell.contains(temp));
+       if(avlMovesColouredBuffer.isEmpty()) return false;
+
+       //find out what is the deal with castling cell.
+       return avlMovesColouredBuffer.contains(temp) || castlingCells.contains(temp);
 
    }
 

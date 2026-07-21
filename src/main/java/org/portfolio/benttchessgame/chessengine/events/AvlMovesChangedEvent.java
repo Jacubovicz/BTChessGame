@@ -6,4 +6,4 @@ import org.portfolio.benttchessgame.chessengine.Cell;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public record AvlMovesChangedEvent(HashMap<EnumColors, ArrayList<Cell>> avlMoves) { }
+public record AvlMovesChangedEvent(ArrayList<Cell> avlMoves) { }

@@ -5,6 +5,8 @@ import org.portfolio.benttchessgame.chessengine.commands.EngineCommand;
 import org.portfolio.benttchessgame.chessengine.commands.MakeMove;
 import org.portfolio.benttchessgame.chessengine.commands.ProposeMove;
 import org.portfolio.benttchessgame.chessengine.commands.StartNewGame;
+import org.portfolio.benttchessgame.chessengine.exceptions.IllegalMoveException;
+
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -49,7 +51,11 @@ public class ChessEngineRunner implements Runnable{
                }
                else if(command instanceof MakeMove m)
                {
-                   engine.moveTheFigure(m.getMoveOperation());
+                   try {
+                       engine.moveTheFigure(m.getMoveOperation());
+                   } catch (IllegalMoveException e) {
+                       throw new RuntimeException(e);
+                   }
                }
            }
        }

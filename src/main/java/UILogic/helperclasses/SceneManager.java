@@ -45,6 +45,12 @@ public class SceneManager {
             setView(EnumViews.START_VIEW);
     }
 
+
+    public <T> T getController(EnumViews view)
+    {
+        return (T)viewList.get(view);
+    }
+
     private void loadFxmlFiles()
     {
         Map<EnumViews, Scene> map = new HashMap<>();
@@ -62,6 +68,7 @@ public class SceneManager {
 
                     Thread engineThread = new Thread(engineRunner);
                     engineThread.start();
+
                     controller.setChessEngineRunner(engineRunner);
                 }
 

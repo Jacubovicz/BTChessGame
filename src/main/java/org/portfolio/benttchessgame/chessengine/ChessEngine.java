@@ -1,5 +1,7 @@
 package org.portfolio.benttchessgame.chessengine;
 
+import org.portfolio.benttchessgame.chessengine.exceptions.IllegalMoveException;
+import org.portfolio.benttchessgame.chessengine.movement.MoveOperation;
 import org.portfolio.benttchessgame.chessengine.players.BasePlayer;
 import org.portfolio.benttchessgame.figures.Figure;
 
@@ -31,11 +33,10 @@ public class ChessEngine{
         }
     }
 
-    public void moveTheFigure(MoveOperation operation)
-    {
+    public void moveTheFigure(Cell destCell) throws IllegalMoveException {
         if(bridge != null)
         {
-            bridge.moveTheFigure(operation);
+            bridge.moveTheFigure(destCell);
         }
     }
 
@@ -53,4 +54,6 @@ public class ChessEngine{
             bridge.fillTheStarterMoves();
         }
     }
+
+
 }

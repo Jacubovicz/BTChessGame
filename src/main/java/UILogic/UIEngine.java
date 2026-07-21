@@ -1,5 +1,6 @@
 package UILogic;
 
+import UILogic.controllers.GameViewController;
 import UILogic.helperclasses.EnumViews;
 import UILogic.helperclasses.SceneManager;
 import javafx.stage.Stage;
@@ -23,6 +24,11 @@ public class UIEngine {
         }
 
         return instance;
+    }
+
+    public <T> T getController(EnumViews view)
+    {
+        return sm.getController(view);
     }
 
     private UIEngine(Stage stage)

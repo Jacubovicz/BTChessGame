@@ -1,7 +1,11 @@
 package org.portfolio.benttchessgame.chessengine;
 
+import org.portfolio.benttchessgame.chessengine.events.OnTurnChangedActivateFieldsEvent;
+import org.portfolio.benttchessgame.chessengine.events.SetupFXPlayersEvent;
+import org.portfolio.benttchessgame.chessengine.helperclasses.GameEventBus;
 import org.portfolio.benttchessgame.chessengine.listeners.TimeChangeListener;
 import org.portfolio.benttchessgame.chessengine.listeners.TurnChangedListener;
+import org.portfolio.benttchessgame.chessengine.movement.MoveOperation;
 import org.portfolio.benttchessgame.chessengine.players.Player;
 
 import java.util.*;
@@ -18,6 +22,8 @@ public class Session {
     private String time = "0";
     private List<TimeChangeListener> timeListeners = new ArrayList<>();
     private List<TurnChangedListener> turnListeners = new ArrayList<>();
+    private final PlayerLinkedList playerList;
+
     Player player1, player2;
     private boolean inGame = true;
 
@@ -35,8 +41,12 @@ public class Session {
         player1.setColor(random.nextBoolean());
         player2.setColor(!player1.getColor());
 
+        this.playerList = new PlayerLinkedList(player1, player2);
+        if(playerList.head.getPlayer().getColor() != WHITE) playerList.next();
+
         new TimerThread(time, timeListeners);
-        this.operationQueue = new ConcurrentLinkedQueue<>();
+     //   notifyFXPlayerSetup(player1, player2);
+
     }
 
     public boolean isInGame()
@@ -57,14 +67,27 @@ public class Session {
     public void switchTurn()
     {
         this.turn = !turn;
+        //
+        playerList.next();
+        //
         turnCounter++;
         notifyTurnListeners();
+
+       notifyFXPlayerSetup(player1, player2); //Test code
+
+    }
+
+    public Player getCurrentPlayer()
+    {
+        return playerList.getCurrentPlayer();
     }
 
     public void addTimeChangeListener(TimeChangeListener listener)
     {
         this.timeListeners.add(listener);
     }
+
+
 
     public void addTurnChangedListener(TurnChangedListener listener)
     {
@@ -89,23 +112,13 @@ public class Session {
         return this.player2;
     }
 
-    public void setTurn(boolean color)
-    {
-        this.turn = color;
-    }
-
-    public void publishMoves(Queue<MoveOperation> operationQueue)
-    {
-        this.operationQueue.addAll(operationQueue);
-    }
-
-    public Queue<MoveOperation> getOperationQueue()
-    {
-        return this.operationQueue;
-    }
-
     public int getTurnCounter()
     {
         return this.turnCounter;
+    }
+
+    public void notifyFXPlayerSetup(Player p1, Player p2)
+    {
+        GameEventBus.getInstance().publishEvent(new SetupFXPlayersEvent(p1, p2));
     }
 }

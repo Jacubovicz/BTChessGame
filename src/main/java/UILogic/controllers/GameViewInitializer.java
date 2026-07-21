@@ -50,9 +50,8 @@ public class GameViewInitializer {
             int col = (c==null) ? 0 : c;
 
             sp.setOnMouseClicked(event -> gameViewController.proposeMove(sp, row, col));
-            //
              sp.setDisable(true);
-            //
+
             gameBoard[row][col] = sp;
         }
     }

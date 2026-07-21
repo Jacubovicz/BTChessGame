@@ -32,11 +32,8 @@ public class StartViewController implements RunnerAware{
     @FXML
     public void startTheGameWithPlayer()
     {
-
-
         ui = UIEngine.getInstance();
         Platform.runLater(() -> ui.setTheGameView());
-
     }
 
     @FXML

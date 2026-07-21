@@ -1,25 +1,23 @@
 package org.portfolio.benttchessgame.chessengine.players;
 
-import org.portfolio.benttchessgame.chessengine.MoveOperation;
+import javafx.scene.image.Image;
 
-import java.util.ArrayList;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Objects;
 
 public abstract class Player {
 
    private final String name;
    private boolean color;
-
-   private Queue<MoveOperation> movements;
+   private Image profileIcon;
 
    public final boolean WHITE = true;
    public final boolean BLACK = false;
 
-  /* protected*/ Player(String name)
+   Player(String name)
    {
-       movements = new ConcurrentLinkedQueue<>();
        this.name = name;
+       this.profileIcon = new Image(Objects.requireNonNull(getClass().getResource("/images/default_player_icon.png")).toExternalForm());
+
    }
 
    public boolean getColor()
@@ -32,28 +30,19 @@ public abstract class Player {
        this.color = color;
    }
 
-
    public String getName()
    {
        return this.name;
    }
 
-   public Queue<MoveOperation> getMovements()
+   public Image getProfileIcon()
    {
-       return movements;
+      return profileIcon;
    }
 
-   public MoveOperation performMove()
+   public void setProfileIcon(Image image)
    {
-       MoveOperation operation = this.movements.poll();
-
-
-    return operation;
+      this.profileIcon = image;
    }
 
-
-   public void publishMoves(Queue<MoveOperation> operations)
-   {
-       this.movements = operations;
-   }
 }

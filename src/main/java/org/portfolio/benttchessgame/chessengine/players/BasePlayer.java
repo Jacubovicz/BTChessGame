@@ -2,7 +2,8 @@ package org.portfolio.benttchessgame.chessengine.players;
 
 //This is the player for offline pvp purposes.
 
-import org.portfolio.benttchessgame.chessengine.MoveOperation;
+import org.portfolio.benttchessgame.chessengine.movement.PieceBoardManager;
+import org.portfolio.benttchessgame.chessengine.Session;
 
 import java.util.logging.Logger;
 
@@ -14,10 +15,8 @@ public class BasePlayer extends Player{
 
     public BasePlayer(String name)
     {
-        super("BasePlayer " + name);
+        super(name);
     }
-
-
 
 
 }

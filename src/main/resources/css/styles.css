@@ -6,7 +6,11 @@
     	-fx-background-position: center;
 }
 
-.anchor-pane { -fx-border-color: yellow; -fx-border-width: 3; }
+#playerBoard {
+    -fx-border-color: yellow;
+    -fx-border-radius: 10px;
+}
+
 
 #darkSquare {
 	-fx-background-image: url("../images/dark.png");

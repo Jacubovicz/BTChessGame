@@ -25,6 +25,11 @@ public class Pawn extends Figure{
         super.setName("pawn");
     }
 
+    @Override
+    public int getBaseScore() {
+        return 10;
+    }
+
     public Pawn(boolean color, int vector)
     {
         super(color);
@@ -46,11 +51,18 @@ public class Pawn extends Figure{
         }
     }
 
+
+
     public void setEnpassantPossible(Session currentSession)
     {
         this.enpassantPossible = true;
         this.enpassantTurn = currentSession.getTurnCounter();
 
+    }
+
+    public void unlock()
+    {
+        this.isLocked = false;
     }
 
     public boolean isEnpassantPossible(Session currentSession)

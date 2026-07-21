@@ -1,8 +1,12 @@
-package org.portfolio.benttchessgame.chessengine;
+package org.portfolio.benttchessgame.chessengine.movement;
+
+import org.portfolio.benttchessgame.chessengine.Cell;
 
 public class MoveOperation {
 
     Cell initCell, destCell;
+
+    private boolean owner;
 
     public MoveOperation() {}
 
@@ -17,9 +21,14 @@ public class MoveOperation {
         this.destCell = null;
     }
 
-    public boolean isValid()
+    public boolean getOwner()
     {
-        return initCell != null && destCell != null;
+        return owner;
+    }
+
+    public void setOwner(boolean owner)
+    {
+        this.owner = owner;
     }
 
     public Cell getInitCell()

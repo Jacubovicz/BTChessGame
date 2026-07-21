@@ -7,6 +7,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -14,17 +15,18 @@ import javafx.scene.layout.StackPane;
 import org.portfolio.benttchessgame.chessengine.Cell;
 import org.portfolio.benttchessgame.chessengine.ChessEngine;
 import org.portfolio.benttchessgame.chessengine.ChessEngineRunner;
-import org.portfolio.benttchessgame.chessengine.MoveOperation;
+import org.portfolio.benttchessgame.chessengine.events.*;
+import org.portfolio.benttchessgame.chessengine.movement.MoveOperation;
 import org.portfolio.benttchessgame.chessengine.commands.MakeMove;
 import org.portfolio.benttchessgame.chessengine.commands.ProposeMove;
-import org.portfolio.benttchessgame.chessengine.events.AvlMovesChangedEvent;
-import org.portfolio.benttchessgame.chessengine.events.BoardChangedEvent;
-import org.portfolio.benttchessgame.chessengine.events.OnTimeChangeEvent;
 import org.portfolio.benttchessgame.chessengine.helperclasses.GameEventBus;
+import org.portfolio.benttchessgame.chessengine.players.Player;
 import org.portfolio.benttchessgame.figures.Figure;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 
 public class GameViewController {
@@ -38,13 +40,17 @@ public class GameViewController {
     MoveOperation operation = new MoveOperation();
     HashMap<EnumColors, ArrayList<Cell>> paletteMap;
 
-    boolean[][] clickableFields;
-
     @FXML
     GridPane chessBoard;
 
     @FXML
     Label timer, playerOne, playerTwo;
+
+    @FXML
+    TextField nickname_white, nickname_black, timeElapsed_white, timeElapsed_black;
+
+    @FXML
+    ImageView white_player_icon, black_player_icon, whites_turn_indicator, blacks_turn_indicator;
 
     boolean turn = true; // true - white, false - dark
 
@@ -58,6 +64,7 @@ public class GameViewController {
         initializer = new GameViewInitializer(list, gameBoard, this);
 
         this.painter = new Painter(gameBoard);
+
     }
 
     private void renderTheBoard(Figure[][] fig)
@@ -80,25 +87,14 @@ public class GameViewController {
 
     public void proposeMove(StackPane sp, int row, int col)
     {
-        if(operation.getInitCell() == null || !painter.isInAvailableMoves(row, col))
+        if(!painter.isInAvailableMoves(row, col))
         {
-            painter.removeAvlMvsPaint();
-            painter.cleanTheBuffer();
-            operation.clear();
-            operation.setInitCell(new Cell(row, col));
-            painter.addToCleanupBuffer(operation.getInitCell());
             engineRunner.post(new ProposeMove(row, col));
-            System.out.println("Init cell obtained");
             return;
         }
-        if(operation.getInitCell() != null && operation.getDestCell() == null  && painter.isInAvailableMoves(row, col))
+        if(painter.isInAvailableMoves(row, col))
         {
-            operation.setDestCell(new Cell(row, col));
-            painter.addToCleanupBuffer(operation.getDestCell());
-            engineRunner.post(new MakeMove(operation));
-            painter.removeAvlMvsPaint();
-            painter.paintClickedOrMoved(row, col);
-            System.out.println("Dest cell obtained");
+            engineRunner.post(new MakeMove(new Cell(row,col)));
         }
     }
 
@@ -107,6 +103,11 @@ public class GameViewController {
         wireListeners();
         renderTheBoard(engine.getSnapshot());
         engine.fillTheStarterMoves();
+
+        whites_turn_indicator.setImage(new Image(Objects.requireNonNull(getClass().getResource("/images/whites_turn.png")).toExternalForm()));
+        whites_turn_indicator.setVisible(false);
+        blacks_turn_indicator.setImage(new Image(Objects.requireNonNull(getClass().getResource("images/blacks_turn.png")).toExternalForm()));
+        blacks_turn_indicator.setVisible(false);
     }
 
     public void setChessEngineRunner(ChessEngineRunner engineRunner)
@@ -122,8 +123,28 @@ public class GameViewController {
         eventBus.subscribe(AvlMovesChangedEvent.class, event -> Platform.runLater(()-> painter.paintAvlMoves(event.avlMoves())));
         eventBus.subscribe(BoardChangedEvent.class, event -> Platform.runLater(() -> renderTheBoard(event.board())));
         eventBus.subscribe(OnTimeChangeEvent.class, event -> Platform.runLater(() -> timer.setText(event.time())));
+        eventBus.subscribe(ReactivateFieldsEvent.class, event -> Platform.runLater(() -> painter.setClickableFields(event.cells())));
+        eventBus.subscribe(PaintClickedMovedEvent.class, event -> Platform.runLater(() -> painter.paintClickedOrMoved(event.clickedOrMoved())));
+        eventBus.subscribe(SetupFXPlayersEvent.class, event -> Platform.runLater(() -> setupTheFXPlayers(event.player1(), event.player2())));
     }
 
+    private void setupTheFXPlayers(Player whitePlayer, Player blackPlayer)
+    {
+        List<Player> players = List.of(whitePlayer, blackPlayer);
+
+        for(Player player : players)
+        {
+            if (player.getColor()) {
+                nickname_white.setText(player.getName());
+                white_player_icon.setImage(player.getProfileIcon());
+
+            } else {
+
+                nickname_black.setText(player.getName());
+                black_player_icon.setImage(player.getProfileIcon());
+            }
+        }
+    }
 
     public void setTurn(boolean turn)
     {

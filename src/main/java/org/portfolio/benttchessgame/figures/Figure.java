@@ -11,11 +11,14 @@ public abstract class Figure {
     private boolean WHITE = true;
     private boolean DARK = false;
 
+
     public Figure(boolean color)
     {
         this.color = color;
         this.colorName = color == WHITE ? "white" : "dark";
     }
+
+    public abstract int getBaseScore();
 
     protected void setName(String name)
     {

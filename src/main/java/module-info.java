@@ -5,6 +5,7 @@ module org.portfolio.benttchessgame {
     requires org.slf4j;
     requires ch.qos.logback.classic;
     requires java.sql;
+    requires jdk.jdi;
 
 
     opens org.portfolio.benttchessgame to javafx.fxml;

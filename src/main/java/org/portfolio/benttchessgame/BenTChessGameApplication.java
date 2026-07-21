@@ -3,10 +3,6 @@ package org.portfolio.benttchessgame;
 import UILogic.UIEngine;
 import javafx.application.Application;
 import javafx.stage.Stage;
-import org.portfolio.benttchessgame.chessengine.Cell;
-import org.portfolio.benttchessgame.chessengine.ChessEngine;
-import org.portfolio.benttchessgame.chessengine.players.BasePlayer;
-
 
 import java.io.IOException;
 

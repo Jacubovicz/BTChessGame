@@ -1,5 +1,7 @@
 package org.portfolio.benttchessgame.chessengine;
 
+import org.portfolio.benttchessgame.chessengine.exceptions.IllegalMoveException;
+import org.portfolio.benttchessgame.chessengine.movement.MoveOperation;
 import org.portfolio.benttchessgame.figures.Figure;
 
 public interface GameBridge{
@@ -8,7 +10,7 @@ public interface GameBridge{
 
     public void proposeMove(int row, int col);
 
-    public void moveTheFigure(MoveOperation operation);
+    public void moveTheFigure(Cell destCell) throws IllegalMoveException;
 
     public void resetTheGame();
 

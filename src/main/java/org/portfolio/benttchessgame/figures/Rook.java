@@ -12,6 +12,11 @@ public class Rook extends Figure{
     }
 
     @Override
+    public int getBaseScore() {
+        return 50;
+    }
+
+    @Override
     public boolean doesSlide()
     {
         return true;

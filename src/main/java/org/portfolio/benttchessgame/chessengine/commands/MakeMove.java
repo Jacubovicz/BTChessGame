@@ -1,17 +1,17 @@
 package org.portfolio.benttchessgame.chessengine.commands;
 
-import org.portfolio.benttchessgame.chessengine.MoveOperation;
+import org.portfolio.benttchessgame.chessengine.Cell;
 
 public class MakeMove implements EngineCommand{
 
-    MoveOperation operation;
+    Cell destCell;
 
-    public MakeMove(MoveOperation moveOperation){
-        this.operation = moveOperation;
+    public MakeMove(Cell destCell){
+        this.destCell = destCell;
     }
 
-    public MoveOperation getMoveOperation()
+    public Cell getMoveOperation()
     {
-        return operation;
+        return destCell;
     }
 }

@@ -1,6 +1,6 @@
 package org.portfolio.benttchessgame.chessengine;
 
-import org.portfolio.benttchessgame.chessengine.players.Player;
+import org.portfolio.benttchessgame.chessengine.exceptions.IllegalMoveException;
 import org.portfolio.benttchessgame.figures.Figure;
 
 public class OfflineBridgeImpl implements GameBridge{
@@ -22,10 +22,10 @@ public class OfflineBridgeImpl implements GameBridge{
     }
 
     @Override
-    public void moveTheFigure(MoveOperation operation) {
+    public void moveTheFigure(Cell destCell) throws IllegalMoveException {
         if(localGame != null)
         {
-            localGame.move(operation);
+            localGame.move(destCell);
         }
     }
 

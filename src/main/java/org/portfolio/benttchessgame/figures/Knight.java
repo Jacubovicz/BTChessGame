@@ -13,6 +13,11 @@ public class Knight extends Figure{
         super.setName("knight");
     }
 
+    @Override
+    public int getBaseScore() {
+        return 30;
+    }
+
 
     @Override
     public int[][] getOffset() {

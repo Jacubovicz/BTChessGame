@@ -11,6 +11,11 @@ public class Queen extends Figure{
     }
 
     @Override
+    public int getBaseScore() {
+        return 90;
+    }
+
+    @Override
     public boolean doesSlide()
     {
         return true;

@@ -10,6 +10,6 @@ module org.portfolio.benttchessgame {
 
     opens org.portfolio.benttchessgame to javafx.fxml;
     exports org.portfolio.benttchessgame;
-    exports UILogic.controllers;
-    opens UILogic.controllers to javafx.fxml;
+    exports org.portfolio.benttchessgame.ui.controller;
+    opens org.portfolio.benttchessgame.ui.controller to javafx.fxml;
 }

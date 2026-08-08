@@ -1,5 +1,9 @@
 package org.portfolio.benttchessgame.engine.command;
 
-public interface GameCommand { }
+import org.portfolio.benttchessgame.engine.ChessEngine;
+
+public interface GameCommand {
+    void execute(ChessEngine engine);
+}
 
 

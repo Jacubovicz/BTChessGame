@@ -1,30 +1,33 @@
 package org.portfolio.benttchessgame.engine.board;
 
-import org.portfolio.benttchessgame.engine.BoardSquare;
-import org.portfolio.benttchessgame.engine.GameSession;
+import org.portfolio.benttchessgame.core.BoardSquare;
+import org.portfolio.benttchessgame.engine.GameState;
 import org.portfolio.benttchessgame.engine.event.*;
-import org.portfolio.benttchessgame.engine.eventbus.GameEventBus;
+import org.portfolio.benttchessgame.engine.event.GameEventPublisher;
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
 import org.portfolio.benttchessgame.engine.rule.ChessRules;
 import org.portfolio.benttchessgame.engine.rule.MoveValidator;
 import org.portfolio.benttchessgame.piece.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class BoardManager {
 
     private ChessBoard chessBoard;
     private final int GRID_SIZE;
-    private final GameSession currentGameSession;
+    private final GameEventPublisher eventPublisher;
+    private  GameState gameState;
 
-    public BoardManager(ChessBoard chessBoard, GameSession currentGameSession) {
-        this.currentGameSession = currentGameSession;
+    public BoardManager(ChessBoard chessBoard, GameEventPublisher eventPublisher) {
         this.chessBoard = chessBoard;
         this.GRID_SIZE = chessBoard.GRID_SIZE;
-
+        this.eventPublisher = eventPublisher;
     }
 
-    public void setPieceBoard(ChessBoard chessBoard) {
-        this.chessBoard = chessBoard;
+    public void setState(GameState gameState)
+    {
+        this.gameState = gameState;
     }
 
     public BoardManager rawMove(Move operation) {
@@ -32,9 +35,9 @@ public class BoardManager {
         BoardSquare from = operation.getInitCell();
         BoardSquare to = operation.getDestCell();
 
-        Piece f = chessBoard.piecesOnBoard[from.getRow()][from.getCol()];
-        chessBoard.piecesOnBoard[from.getRow()][from.getCol()] = null;
-        chessBoard.piecesOnBoard[to.getRow()][to.getCol()] = f;
+        Piece f = chessBoard.getPieceAt(from.getRow(), from.getCol());
+        chessBoard.setPieceAt(from.getRow(), from.getCol(), null);
+        chessBoard.setPieceAt(to.getRow(), to.getCol(), f);
 
         return null;
     }
@@ -43,16 +46,16 @@ public class BoardManager {
         return chessBoard.getSnapshot();
     }
 
-    //returns all the cells where said player has physical figures
-    public ArrayList<BoardSquare> getPositionCellsOfThePlayer(boolean isWhitePlayer)
+
+    public List<BoardSquare> getPositionSquaresOfThePlayer(PlayerColor playerColor)
     {
-        ArrayList<BoardSquare> positionBoardSquares = new ArrayList<>();
+        List<BoardSquare> positionBoardSquares = new ArrayList<>();
 
         for(int row = 0; row < GRID_SIZE; row++)
         {
             for(int col = 0; col < GRID_SIZE; col++)
             {
-                if(chessBoard.getPiecesOnBoard()[row][col] != null && chessBoard.getPiecesOnBoard()[row][col].getColor() == isWhitePlayer)
+                if(chessBoard.getPiecesOnBoard()[row][col] != null && chessBoard.getPiecesOnBoard()[row][col].getColor() == playerColor)
                 {
                     positionBoardSquares.add(new BoardSquare(row,col));
                 }
@@ -61,81 +64,57 @@ public class BoardManager {
         return positionBoardSquares;
     }
 
+
     //eliminates the figure on said position
     public void kill(BoardSquare boardSquare) {
-        chessBoard.getPiecesOnBoard()[boardSquare.getRow()][boardSquare.getCol()] = null;
+        chessBoard.setPieceAt(boardSquare.getRow(), boardSquare.getCol(), null);
         notifyBoardChangedListeners();
     }
 
 
     // returns legal moves of said figure
-    public ArrayList<BoardSquare> proposeMove(BoardSquare boardSquare, GameSession currentGameSession) {
+    public List<BoardSquare> proposeMoves(BoardSquare boardSquare, GameState gameState) {
 
-        Piece piece = chessBoard.piecesOnBoard[boardSquare.getRow()][boardSquare.getCol()];
+        Piece piece = chessBoard.getPieceAt(boardSquare.getRow(), boardSquare.getCol());
 
         if (piece == null) {
             return new ArrayList<>();
         }
-        return MoveValidator.getLegalMovesOf(boardSquare.getRow(), boardSquare.getCol(), currentGameSession, this.getSnapshot());
+        return MoveValidator.getLegalMovesOf(boardSquare.getRow(), boardSquare.getCol(), gameState, this.getSnapshot());
     }
 
 
-    public void move(Move operation, GameSession currentGameSession)
+    public void move(Move operation, GameState state)
     {
         BoardSquare from = operation.getInitCell();
         BoardSquare to = operation.getDestCell();
 
-        Piece[][] board = chessBoard.piecesOnBoard; //this has exact copies so it works on original array
-
-        if(board[from.getRow()][from.getCol()] != null)
+        if(chessBoard.getPieceAt(from.getRow(), from.getCol()) != null)
         {
-            Piece f= board[from.getRow()][from.getCol()];
-            board[from.getRow()][from.getCol()] = null;
-            board[to.getRow()][to.getCol()] = f;
+            Piece f = chessBoard.getPieceAt(from.getRow(), from.getCol());
+            chessBoard.setPieceAt(from.getRow(), from.getCol(), null);
+            chessBoard.setPieceAt(to.getRow(), to.getCol(), f);
 
-            if(f instanceof Pawn p)
+            switch(f)
             {
-               handleThePawn(from,to,board,p);
-            }
-            if(f instanceof Rook r)
-            {
-                r.setDidMove();
-            }
-
-            //here we are getting castling and applying it to the game.
-            if(f instanceof  King k)
-            {
-                handleTheKing(k, operation);
+                case Pawn p -> handleThePawn(from, to, p);
+                case Rook r -> r.setDidMove();
+                case King k -> handleTheKing(k, operation);
+                default -> {}
             }
 
             //checkmate straight away after movement, before switching the player colors. Looks only for complete lack of movements
             //no possible escape left:
-            boolean checkmate = ChessRules.isCheckmate(getSnapshot().getPiecesOnBoard(), !currentGameSession.getTurn());
+            var opponentOfNowMovingPlayer = state.nowMovingPlayer() == PlayerColor.WHITE ? PlayerColor.DARK : PlayerColor.WHITE;
+            boolean checkmate = ChessRules.isCheckmate(getSnapshot(), gameState, opponentOfNowMovingPlayer);
             if(checkmate)
             {
                 //if checkmate(no possible moves for the next player) then the gameOverEvent is being sent.
                 notifyBoardChangedListeners();
-                notifyGameOverListener(currentGameSession.getTurn());
+                notifyGameOverListener(state.nowMovingPlayer());
                 System.err.print("CHECKMATE");
                 return;
             }
-            //if no checkmate, then the program executes further and checks if kingCell of opposite player is attacked.
-            boolean kingCellAttacked = ChessRules.isKingCellAttackedBy(getSnapshot().getPiecesOnBoard(), MoveValidator.getTheKingCell(getSnapshot().getPiecesOnBoard(), !currentGameSession.getTurn()), currentGameSession.getTurn());
-
-            //if the opposite player's king is attacked, then the adequate color is being added to the list of colors
-            if(kingCellAttacked)
-            {
-                ArrayList<BoardSquare> attackerAndTheKing = new ArrayList<>();
-                //add the king field to be highlighted as DARK RED
-                attackerAndTheKing.add(MoveValidator.getTheKingCell(getSnapshot().piecesOnBoard, !currentGameSession.getTurn()));
-                attackerAndTheKing.add(operation.getDestCell());
-
-                //NEED TO FIND THE ATTACKER STILL
-                notifyBoardChangedListeners();
-                notifyKingCellAttacked(attackerAndTheKing);
-            }
-            //end
-
         }
 
         //notify the Board listeners that it has changed
@@ -145,14 +124,15 @@ public class BoardManager {
 
     private void handleTheKing(King k, Move kingOperation)
     {
-        if(!movesSideways(kingOperation)) return;
-        if(k.isCastlingPossible())
-        {
-            Move castlingOperation = k.getCastling(kingOperation);
-            if(castlingOperation != null)
-            {
-                rawMove(castlingOperation);
-            }
+        int row = kingOperation.getInitCell().getRow();
+        int fromCol = kingOperation.getInitCell().getCol();
+        int toCol = kingOperation.getDestCell().getCol();
+
+        if (Math.abs(fromCol - toCol) == 2) {
+            // Castling detected
+            int rookInitCol = toCol > fromCol ? 7 : 0;
+            int rookDestCol = toCol > fromCol ? fromCol + 1 : fromCol - 1;
+            rawMove(new Move(new BoardSquare(row, rookInitCol), new BoardSquare(row, rookDestCol)));
         }
         k.setDidMove();
     }
@@ -162,25 +142,25 @@ public class BoardManager {
         return operation.getInitCell().getRow() == operation.getDestCell().getRow();
     }
 
-    private void handleThePawn(BoardSquare from, BoardSquare to, Piece[][] board, Pawn p)
+    private void handleThePawn(BoardSquare from, BoardSquare to, Pawn p)
     {
         int diff = from.getCol() > to.getCol() ? -1 : 1;
         Piece enpassant = null;
         if((from.getCol() + diff) < GRID_SIZE && from.getCol() + diff >= 0)
         {
-            enpassant = board[from.getRow()][from.getCol() + diff];
+            enpassant = chessBoard.getPieceAt(from.getRow(), from.getCol() + diff);
         }
-        if(enpassant != null && board[from.getRow()][from.getCol() + diff] instanceof Pawn capturedPawn && capturedPawn.getColor() != p.getColor())
+        if(enpassant instanceof Pawn capturedPawn && capturedPawn.getColor() != p.getColor())
         {
             BoardSquare boardSquare = new BoardSquare(from.getRow(), from.getCol() + diff);
-            if(capturedPawn.isEnpassantPossible(currentGameSession)) this.kill(boardSquare);
+            if(capturedPawn.isEnpassantPossible(gameState)) this.kill(boardSquare);
         }
 
         p.incTheRank();
         if(Math.abs(from.getRow() - to.getRow()) == 2)
         {
             p.incTheRank();
-            p.setEnpassantPossible(currentGameSession);
+            p.setEnpassantPossible(gameState);
         }
         p.disableFirstMove(); //This is special case for the Pawn.
         if(p.getRank() == 7)
@@ -191,22 +171,25 @@ public class BoardManager {
 
     private void promotePawn(Piece fig, int row, int col)
     {
-        this.chessBoard.piecesOnBoard[row][col] = fig;
+        this.chessBoard.setPieceAt(row, col, fig);
     }
 
     public void notifyBoardChangedListeners()
     {
-        GameEventBus.getInstance().publishEvent(new BoardChangedEvent(chessBoard.piecesOnBoard));
+        String[][] representation = new String[GRID_SIZE][GRID_SIZE];
+        for (int r = 0; r < GRID_SIZE; r++) {
+            for (int c = 0; c < GRID_SIZE; c++) {
+                Piece p = chessBoard.getPieceAt(r, c);
+                representation[r][c] = (p != null) ? p.toString() : null;
+            }
+        }
+        eventPublisher.publishEvent(new BoardChangedEvent(representation));
     }
 
-    public void notifyGameOverListener(boolean winningPlayer)
+    public void notifyGameOverListener(PlayerColor winningPlayer)
     {
-        GameEventBus.getInstance().publishEvent(new GameEndedEvent(winningPlayer));
+        eventPublisher.publishEvent(new GameEndedEvent(winningPlayer));
     }
 
-    public void notifyKingCellAttacked(ArrayList<BoardSquare> attackerAndTheKing)
-    {
-        GameEventBus.getInstance().publishEvent(new KingInCheckEvent(attackerAndTheKing));
-    }
 
 }

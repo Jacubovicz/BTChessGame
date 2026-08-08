@@ -4,11 +4,20 @@ import javafx.animation.*;
 import javafx.fxml.FXML;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
+import org.portfolio.benttchessgame.core.AppContext;
+import org.portfolio.benttchessgame.service.NavigationService;
 
 public class LoadingViewController {
 
+    private final AppContext appContext;
+    private final NavigationService navigationService;
 
     @FXML private SVGPath chessBoardAnimationObject;
+
+    public LoadingViewController(AppContext appContext, NavigationService navigationService) {
+        this.appContext = appContext;
+        this.navigationService = navigationService;
+    }
 
     @FXML
     private void initialize() {

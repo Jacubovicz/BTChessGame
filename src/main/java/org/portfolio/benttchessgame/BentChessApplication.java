@@ -1,29 +1,27 @@
 package org.portfolio.benttchessgame;
 
-import org.portfolio.benttchessgame.ui.ViewNavigator;
+import org.portfolio.benttchessgame.core.AppLifecycle;
 import javafx.application.Application;
 import javafx.stage.Stage;
-import org.portfolio.benttchessgame.engine.ChessEngine;
-import org.portfolio.benttchessgame.engine.ChessEngineWorker;
-import org.portfolio.benttchessgame.engine.eventbus.GameEventBus;
 
 import java.io.IOException;
 
 public class BentChessApplication extends Application {
 
+    private AppLifecycle lifecycle;
+
     @Override
     public void start(Stage stage) throws IOException {
+        lifecycle = new AppLifecycle();
+        lifecycle.start(stage);
+    }
 
-        GameEventBus globalBus = GameEventBus.getInstance();
-
-        ChessEngineWorker engineRunner = new ChessEngineWorker();
-        ChessEngine chessEngine = new ChessEngine();
-        engineRunner.setEngine(chessEngine);
-        Thread engineRunnerThread = new Thread(engineRunner);
-        engineRunnerThread.start();
-
-        ViewNavigator ui = ViewNavigator.init(stage, engineRunner);
-        ui.loadMainMenu();
+    @Override
+    public void stop() throws Exception {
+        if (lifecycle != null) {
+            lifecycle.stop();
+        }
+        super.stop();
     }
 
     public static void main(String[] args) {

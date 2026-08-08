@@ -1,19 +1,20 @@
 package org.portfolio.benttchessgame.ui.view;
 
 import javafx.scene.layout.StackPane;
-import org.portfolio.benttchessgame.engine.BoardSquare;
+import org.portfolio.benttchessgame.core.BoardSquare;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class BoardPainter {
 
     private final StackPane[][] gameBoard; //grid
-    private ArrayList<BoardSquare> activeClickableFields  = new ArrayList<>();
+    private List<BoardSquare> activeClickableFields  = new ArrayList<>();
 
-    private final ArrayList<BoardSquare> clickedMovedBuffer = new ArrayList<>();
-    private final ArrayList<BoardSquare> avlMovesColouredBuffer = new ArrayList<>();
-    private final ArrayList<BoardSquare> castlingBoardSquares = new ArrayList<>();
+    private final List<BoardSquare> clickedMovedBuffer = new ArrayList<>();
+    private final List<BoardSquare> avlMovesColouredBuffer = new ArrayList<>();
+    private final List<BoardSquare> castlingBoardSquares = new ArrayList<>();
 
     Map<Styles, String> stylesMap; // styles enum
 
@@ -44,11 +45,11 @@ public class BoardPainter {
 
    }
 
-   private void paint(Styles s, ArrayList<BoardSquare> cellsToPaint)
+   private void paint(Styles s, List<BoardSquare> cellsToPaint)
    {
        if(cellsToPaint.isEmpty()) return;
 
-       ArrayList<BoardSquare> temp = new ArrayList<>();
+       List<BoardSquare> temp = new ArrayList<>();
 
        for(BoardSquare c : cellsToPaint)
        {
@@ -75,7 +76,7 @@ public class BoardPainter {
    }
 
    // the name of a method needs to be changed for "handleAvlMoves"
-   public void paintAvlMoves(ArrayList<BoardSquare> avlMoves)
+   public void paintAvlMoves(List<BoardSquare> avlMoves)
    {
        removePaintAndDisableDelete(avlMovesColouredBuffer);
        removePaintAndDisableDelete(castlingBoardSquares);
@@ -85,7 +86,7 @@ public class BoardPainter {
        activateAvlFields(castlingBoardSquares);
    }
 
-   public void removePaintAndDisableDelete(ArrayList<BoardSquare> cellsForRemoval)
+   public void removePaintAndDisableDelete(List<BoardSquare> cellsForRemoval)
    {
        for(BoardSquare boardSquare : cellsForRemoval)
        {
@@ -105,7 +106,7 @@ public class BoardPainter {
        cellsForRemoval.clear();
    }
 
-   public void activateAvlFields(ArrayList<BoardSquare> fields)
+   public void activateAvlFields(List<BoardSquare> fields)
    {
        if(fields.isEmpty()) return;
 
@@ -118,10 +119,10 @@ public class BoardPainter {
        }
    }
 
-   public void setClickableFields(ArrayList<BoardSquare> clickableFields)
+   public void setClickableFields(List<BoardSquare> clickableFields)
    {
        disableFieldsOf(activeClickableFields);
-       ArrayList<BoardSquare> tempBoardSquares = new ArrayList<>();
+       List<BoardSquare> tempBoardSquares = new ArrayList<>();
 
        /// test only
        for(int i = 0; i< gameBoard.length; i++)
@@ -149,7 +150,7 @@ public class BoardPainter {
       activeClickableFields = new ArrayList<>(tempBoardSquares);
    }
 
-   private void disableFieldsOf(ArrayList<BoardSquare> clickableFields)
+   private void disableFieldsOf(List<BoardSquare> clickableFields)
    {
        if(clickableFields.isEmpty()) return;
 

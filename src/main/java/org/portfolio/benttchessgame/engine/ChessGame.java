@@ -1,66 +1,46 @@
 package org.portfolio.benttchessgame.engine;
 
+import org.portfolio.benttchessgame.core.BoardSquare;
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
+import org.portfolio.benttchessgame.engine.configuration.GameConfiguration;
 import org.portfolio.benttchessgame.engine.event.*;
 import org.portfolio.benttchessgame.engine.exception.IllegalMoveException;
-import org.portfolio.benttchessgame.engine.eventbus.GameEventBus;
 import org.portfolio.benttchessgame.engine.board.Move;
 import org.portfolio.benttchessgame.engine.board.ChessBoard;
 import org.portfolio.benttchessgame.engine.board.BoardManager;
-import org.portfolio.benttchessgame.engine.player.Player;
 import org.portfolio.benttchessgame.piece.Piece;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class ChessGame {
 
-    private BoardManager boardManager = null;
-    private GameSession currentGameSession = null; // Sessions will have data about time, special rules (en passant) available for players, move counter
+    private final BoardManager boardManager;
+    private final GameEventPublisher eventPublisher;
+    private final GameConfiguration gameConfig;
+    private GameState gameState;
 
-    private Player p1, p2;
+    private BoardSquare initialSquare = null;
 
+    public ChessGame(GameConfiguration gameConfig, GameEventPublisher eventPublisher) {
 
-    //this array stores the fields(cells) which are currently active.
-    private ArrayList<BoardSquare> activeFields = new ArrayList<>();
+        this.gameConfig = gameConfig;
+        this.eventPublisher = eventPublisher;
+        this.boardManager = new BoardManager(new ChessBoard(), eventPublisher);
 
-    //this has avlMoves in its array
-    ArrayList<BoardSquare> avlMoves = new ArrayList<>();
+        gameState = new GameState(boardManager.getSnapshot(), 0, PlayerColor.WHITE, new ArrayList<>());
+        boardManager.setState(gameState);
 
-    //this will store the complete move(will be filled by proposeMove and later by "move")
-    Move operation = new Move();
-
-    boolean turn;
-
-    public ChessGame(GameSession gameSession) {
-        this.p1 = gameSession.getPlayer1();
-        this.p2 = gameSession.getPlayer2();
-
-        this.currentGameSession = gameSession;
-        this.boardManager = new BoardManager(new ChessBoard(), currentGameSession);
-        this.turn = currentGameSession.getTurn();
-
-        activatePlayerFieldsOf(currentGameSession.getTurn());
-
-        GameEventBus.getInstance().subscribe(TurnChangedEvent.class, event -> activatePlayerFieldsOf(event.isWhitePlayer()));
+        activatePlayerSquares(gameState.nowMovingPlayer());
     }
 
-    public ChessGame(Player p1, Player p2) {
-        this.p1 = p1;
-        this.p2 = p2;
-
-        this.currentGameSession = new GameSession(p1, p2);
-        this.boardManager = new BoardManager(new ChessBoard(), currentGameSession);
-        this.turn = currentGameSession.getTurn();
-    }
-
-    /** **/
-    public void activatePlayerFieldsOf(boolean color) {
+    public void activatePlayerSquares(PlayerColor playerColor) {
         //find the fields and flush it to the UIEngine.
         if(boardManager != null)
         {
-            activeFields.clear();
-            activeFields = boardManager.getPositionCellsOfThePlayer(color);
-            notifyReactivateFieldsEvent(activeFields);
+            List<BoardSquare> activeSquares = boardManager.getPositionSquaresOfThePlayer(playerColor);
+            flushActiveSquares(activeSquares);
         }
     }
 
@@ -70,7 +50,10 @@ public class ChessGame {
 
     /** **/
     public void fillTheStarterMoves() {
-        activatePlayerFieldsOf(currentGameSession.getTurn());
+        eventPublisher.publishEvent(new PlayersChangedEvent(gameConfig.whitePlayer(), gameConfig.blackPlayer()));
+        activatePlayerSquares(gameState.nowMovingPlayer());
+        notifyActivateMoves(gameState.nowMovingPlayer());
+        boardManager.notifyBoardChangedListeners();
     }
 
     /** **/
@@ -78,57 +61,74 @@ public class ChessGame {
     {
         BoardSquare proposedBoardSquare = new BoardSquare(row, col);
 
-        operation.setInitCell(proposedBoardSquare);
-        avlMoves = boardManager.proposeMove(proposedBoardSquare, currentGameSession); //adds all possible moves of this cell to an array.
+        initialSquare = proposedBoardSquare;
+        List<BoardSquare> avlMovesFromSquare = boardManager.proposeMoves(proposedBoardSquare, gameState); //adds all possible moves of this cell to an array.
         notifyPaintClickedMovedEvent(proposedBoardSquare);
-        notifyAvlMovesChangedListeners(avlMoves);
+        notifyAvlMovesChangedListeners(avlMovesFromSquare);
     }
 
     //The owner of MoveOperation should by assigned at JavaFX level or AI level(if playing with pc)
     public void move(BoardSquare destBoardSquare) throws IllegalMoveException
     {
-        if(operation != null && avlMoves.contains(destBoardSquare))
+        if (initialSquare == null) {
+            throw new IllegalMoveException("No piece selected for movement.");
+        }
+
+        List<BoardSquare> avlMoves = boardManager.proposeMoves(initialSquare, gameState);
+
+        if(avlMoves.contains(destBoardSquare))
         {
-            operation.setDestCell(destBoardSquare);
-            boardManager.move(operation, currentGameSession);
+            Move operation = new Move(initialSquare, destBoardSquare);
+            boardManager.move(operation, gameState);
             notifyPaintClickedMovedEvent(operation.getDestCell());
             notifyAvlMovesChangedListeners(new ArrayList<>()); //create an implementation in GUI
+            initialSquare = null;
+
+            // Update state
+
+            PlayerColor nextTurn = gameState.nowMovingPlayer() == PlayerColor.WHITE ? PlayerColor.DARK : PlayerColor.WHITE;
+            int nextCounter = gameState.moveCounter() + 1;
+            ArrayList<Move> nextHistory = new ArrayList<>(gameState.moveHistory());
+            nextHistory.add(operation);
+
+            this.gameState = new GameState(boardManager.getSnapshot(), nextCounter, nextTurn, nextHistory);
+            boardManager.setState(gameState);
         }
         else
             throw new IllegalMoveException("The outcome of the method is not expected. ");
 
-        currentGameSession.switchTurn();
-        notifyActivateMoves(currentGameSession.getTurn()); //notifies the method responsible for updating the activate fields.
+        activatePlayerSquares(gameState.nowMovingPlayer());
+        notifyActivateMoves(gameState.nowMovingPlayer()); //notifies the method responsible for updating the activate fields.
     }
 
     /** **/
-    public void notifyAvlMovesChangedListeners(ArrayList<BoardSquare> avlMoves) {
-        ArrayList<BoardSquare> copy = new ArrayList<>();
+    public void notifyAvlMovesChangedListeners(List<BoardSquare> avlMoves) {
+        List<BoardSquare> copy = new ArrayList<>();
 
         for(BoardSquare boardSquare : avlMoves)
         {
             copy.add(new BoardSquare(boardSquare.getRow(), boardSquare.getCol(), boardSquare.isCastlingCell()));
         }
-        GameEventBus.getInstance().publishEvent(new AvailableMovesChangedEvent(copy));
+        eventPublisher.publishEvent(new AvailableMovesChangedEvent(copy));
     }
 
     //this one is to wake up the change of active fields on the game object,
-    public void notifyActivateMoves(boolean playerToBeActivated)
+    public void notifyActivateMoves(PlayerColor playerToBeActivated)
     {
-        GameEventBus.getInstance().publishEvent(new TurnChangedEvent(playerToBeActivated));
+        eventPublisher.publishEvent(new TurnChangedEvent(playerToBeActivated));
     }
 
 
     //sends info to GUI to reactivate opponent's fields and block the ones of current player.
-    public void notifyReactivateFieldsEvent(ArrayList<BoardSquare> fields)
+    public void flushActiveSquares(List<BoardSquare> squares)
     {
-        GameEventBus.getInstance().publishEvent(new ActiveSquaresChangedEvent(fields));
+        eventPublisher.publishEvent(new ActiveSquaresChangedEvent(squares));
     }
 
     //sends info to GUI that it needs to paint the cell as clicked or moved (both yellow color)
     public void notifyPaintClickedMovedEvent(BoardSquare boardSquare)
     {
-        GameEventBus.getInstance().publishEvent(new MoveHighlightChangedEvent(boardSquare));
+        eventPublisher.publishEvent(new MoveHighlightChangedEvent(boardSquare));
     }
 
     public void resetTheGame(){}

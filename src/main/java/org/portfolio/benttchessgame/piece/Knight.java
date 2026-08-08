@@ -1,6 +1,8 @@
 package org.portfolio.benttchessgame.piece;
 
-public class Knight extends Piece {
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
+
+public final class Knight extends Piece {
 
 
 
@@ -8,7 +10,7 @@ public class Knight extends Piece {
             {1,-2}, {2,-1}, {2,1}, {1,2}};
 
 
-    public Knight(boolean color) {
+    public Knight(PlayerColor color) {
         super(color);
         super.setName("knight");
     }

@@ -1,10 +1,15 @@
 package org.portfolio.benttchessgame.engine;
 
+import org.portfolio.benttchessgame.core.BoardSquare;
+import org.portfolio.benttchessgame.engine.configuration.GameConfiguration;
+import org.portfolio.benttchessgame.engine.event.GameEventPublisher;
 import org.portfolio.benttchessgame.piece.Piece;
 
 public class OnlineGameBackend implements GameBackend {
+
+
     @Override
-    public void initialize(GameSession gameSession, boolean isOfflineGame) {
+    public void initialize(GameConfiguration gameConfig, GameEventPublisher eventPublisher) {
 
     }
 

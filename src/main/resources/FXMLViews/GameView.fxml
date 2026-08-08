@@ -194,18 +194,18 @@
             </Label>
             <AnchorPane id="playerBoard" layoutX="6.0" layoutY="6.0" prefHeight="160.0" prefWidth="330.0">
                <children>
-                  <TextField id="nickname_white" fx:id="nickname_white" alignment="CENTER" editable="false" layoutX="124.0" layoutY="14.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="NicknameWhite" />
-                  <TextField id="timeElapsed_white" fx:id="timeElapsed_white" alignment="CENTER" editable="false" layoutX="124.0" layoutY="55.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="TimeElapsed/Past White" />
-                  <ImageView id="whileProfileImage" fx:id="white_player_icon" fitHeight="100.0" fitWidth="100.0" layoutX="8.0" layoutY="30.0" pickOnBounds="true" preserveRatio="true" />
-                  <ImageView id="whiteTurnIndicator" fx:id="whites_turn_indicator" fitHeight="64.0" fitWidth="64.0" layoutX="250.0" layoutY="86.0" pickOnBounds="true" preserveRatio="true" />
+                  <TextField id="nickname_white" fx:id="nicknameWhite" alignment="CENTER" editable="false" layoutX="124.0" layoutY="14.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="NicknameWhite" />
+                  <TextField id="timeElapsed_white" fx:id="timeElapsedWhite" alignment="CENTER" editable="false" layoutX="124.0" layoutY="55.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="TimeElapsed/Past White" />
+                  <ImageView id="whileProfileImage" fx:id="whitePlayerIcon" fitHeight="100.0" fitWidth="100.0" layoutX="8.0" layoutY="30.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView id="whiteTurnIndicator" fx:id="whitesTurnIndicator" fitHeight="64.0" fitWidth="64.0" layoutX="250.0" layoutY="86.0" pickOnBounds="true" preserveRatio="true" />
                </children>
             </AnchorPane>
             <AnchorPane layoutX="1030.0" layoutY="6.0" prefHeight="160.0" prefWidth="330.0" style="-fx-border-color: yellow; -fx-border-radius: 10; -fx-background-image: ../images/dark.png;">
                <children>
-                  <TextField id="nickname_black" fx:id="nickname_black" alignment="CENTER" editable="false" layoutX="16.0" layoutY="14.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="NicknameBlack" />
-                  <TextField id="timeElapsed_black" fx:id="timeElapsed_black" alignment="CENTER" editable="false" layoutX="16.0" layoutY="55.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="TimeElapsed/Past Black" />
-                  <ImageView id="blackProfileImage" fx:id="black_player_icon" fitHeight="100.0" fitWidth="100.0" layoutX="222.0" layoutY="30.0" pickOnBounds="true" preserveRatio="true" />
-                  <ImageView id="blackTurnIndicator" fx:id="blacks_turn_indicator" fitHeight="64.0" fitWidth="64.0" layoutX="16.0" layoutY="86.0" pickOnBounds="true" preserveRatio="true" />
+                  <TextField id="nickname_black" fx:id="nicknameBlack" alignment="CENTER" editable="false" layoutX="16.0" layoutY="14.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="NicknameBlack" />
+                  <TextField id="timeElapsed_black" fx:id="timeElapsedBlack" alignment="CENTER" editable="false" layoutX="16.0" layoutY="55.0" prefHeight="25.0" prefWidth="190.0" style="-fx-background-color: #FF9644;" text="TimeElapsed/Past Black" />
+                  <ImageView id="blackProfileImage" fx:id="blackPlayerIcon" fitHeight="100.0" fitWidth="100.0" layoutX="222.0" layoutY="30.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView id="blackTurnIndicator" fx:id="blacksTurnIndicator" fitHeight="64.0" fitWidth="64.0" layoutX="16.0" layoutY="86.0" pickOnBounds="true" preserveRatio="true" />
                </children>
             </AnchorPane>
          </children>

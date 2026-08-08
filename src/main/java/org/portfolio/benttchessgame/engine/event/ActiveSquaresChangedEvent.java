@@ -1,8 +1,8 @@
 package org.portfolio.benttchessgame.engine.event;
 
-import org.portfolio.benttchessgame.engine.BoardSquare;
+import org.portfolio.benttchessgame.core.BoardSquare;
 
-import java.util.ArrayList;
+import java.util.List;
 
-public record ActiveSquaresChangedEvent(ArrayList<BoardSquare> boardSquares) {
+public record ActiveSquaresChangedEvent(List<BoardSquare> boardSquares) {
 }

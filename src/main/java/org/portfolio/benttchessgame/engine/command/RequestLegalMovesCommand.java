@@ -1,23 +1,18 @@
 package org.portfolio.benttchessgame.engine.command;
 
+import org.portfolio.benttchessgame.engine.ChessEngine;
 
 public class RequestLegalMovesCommand implements GameCommand {
 
-    int row, col;
+    private final int row, col;
 
-    public RequestLegalMovesCommand(int row, int col)
-    {
+    public RequestLegalMovesCommand(int row, int col) {
         this.row = row;
         this.col = col;
     }
 
-    public int getRow()
-    {
-        return row;
-    }
-
-    public int getCol()
-    {
-        return col;
+    @Override
+    public void execute(ChessEngine engine) {
+        engine.proposeMove(row, col);
     }
 }

@@ -1,6 +1,9 @@
 package org.portfolio.benttchessgame.engine;
 
+import org.portfolio.benttchessgame.core.BoardSquare;
+import org.portfolio.benttchessgame.engine.configuration.GameConfiguration;
 import org.portfolio.benttchessgame.engine.exception.IllegalMoveException;
+import org.portfolio.benttchessgame.engine.event.GameEventPublisher;
 import org.portfolio.benttchessgame.piece.Piece;
 
 public class LocalGameBackend implements GameBackend {
@@ -8,8 +11,8 @@ public class LocalGameBackend implements GameBackend {
     private ChessGame localChessGame;
 
     @Override
-    public void initialize(GameSession gameSession, boolean isOfflineGame) {
-        this.localChessGame = new ChessGame(gameSession);
+    public void initialize(GameConfiguration gameConfig, GameEventPublisher eventPublisher) {
+        this.localChessGame = new ChessGame(gameConfig, eventPublisher);
     }
 
     @Override

@@ -1,11 +1,13 @@
 package org.portfolio.benttchessgame.piece;
 
-public class Queen extends Piece {
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
+
+public final class Queen extends Piece {
 
 
     private final int[][] offsets = {{-1,-1}, {-1,0}, {-1,1},{0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}};
 
-    public Queen(boolean color) {
+    public Queen(PlayerColor color) {
         super(color);
         super.setName("queen");;
     }

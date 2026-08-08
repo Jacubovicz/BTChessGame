@@ -1,16 +1,14 @@
 package org.portfolio.benttchessgame.engine.board;
 
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
 import org.portfolio.benttchessgame.engine.rule.MoveValidator;
+import org.portfolio.benttchessgame.engine.tools.UtilityMethods;
 import org.portfolio.benttchessgame.piece.*;
 
 public class ChessBoard {
 
-    public final boolean WHITE = true;
-    public final boolean BLACK = false;
     public final int INVERSE = -1;
-
-    public Piece[][] piecesOnBoard;
-
+    private final Piece[][] piecesOnBoard;
     public final int GRID_SIZE = 8;
 
     //default constructor, creates the board of chess with figures
@@ -23,7 +21,7 @@ public class ChessBoard {
     //constructor needed for the snapshot
     private ChessBoard(ChessBoard chessBoard)
     {
-        this.piecesOnBoard = MoveValidator.copy(chessBoard.getPiecesOnBoard());
+        this.piecesOnBoard = UtilityMethods.copyPieceArray(chessBoard.getPiecesOnBoard());
     }
 
     public void resetToStartingPositions()
@@ -37,33 +35,33 @@ public class ChessBoard {
                 {
                     if(j==0 || j == 7)
                     {
-                        piecesOnBoard[i][j] = new Rook(WHITE);
-                        piecesOnBoard[GRID_SIZE-1][j] = new Rook(BLACK);
+                        piecesOnBoard[i][j] = new Rook(PlayerColor.WHITE);
+                        piecesOnBoard[GRID_SIZE-1][j] = new Rook(PlayerColor.DARK);
                     }
                     else if(j==1 || j == 6)
                     {
-                        piecesOnBoard[i][j] = new Knight(WHITE);
-                        piecesOnBoard[GRID_SIZE - 1][j] = new Knight(BLACK);
+                        piecesOnBoard[i][j] = new Knight(PlayerColor.WHITE);
+                        piecesOnBoard[GRID_SIZE - 1][j] = new Knight(PlayerColor.DARK);
                     }
                     else if(j==2 || j== 5)
                     {
-                        piecesOnBoard[i][j] = new Bishop(WHITE);
-                        piecesOnBoard[GRID_SIZE - 1][j] = new Bishop(BLACK);
+                        piecesOnBoard[i][j] = new Bishop(PlayerColor.WHITE);
+                        piecesOnBoard[GRID_SIZE - 1][j] = new Bishop(PlayerColor.DARK);
                     }
                     else if(j == 3)
                     {
-                        piecesOnBoard[i][j] = new Queen(WHITE);
-                        piecesOnBoard[GRID_SIZE - 1][j] = new Queen(BLACK);
+                        piecesOnBoard[i][j] = new Queen(PlayerColor.WHITE);
+                        piecesOnBoard[GRID_SIZE - 1][j] = new Queen(PlayerColor.DARK);
                     }
                     else {
-                        piecesOnBoard[i][j] = new King(WHITE);
-                        piecesOnBoard[GRID_SIZE - 1][j] = new King(BLACK);
+                        piecesOnBoard[i][j] = new King(PlayerColor.WHITE);
+                        piecesOnBoard[GRID_SIZE - 1][j] = new King(PlayerColor.DARK);
                     }
                 }
                 else if( i == 1)
                 {
-                    piecesOnBoard[i][j] = new Pawn(WHITE);
-                    piecesOnBoard[GRID_SIZE-2][j] = new Pawn(BLACK, INVERSE);
+                    piecesOnBoard[i][j] = new Pawn(PlayerColor.WHITE);
+                    piecesOnBoard[GRID_SIZE-2][j] = new Pawn(PlayerColor.DARK, INVERSE);
                 }
             }
         }
@@ -85,6 +83,19 @@ public class ChessBoard {
     public Piece[][] getPiecesOnBoard()
     {
         return this.piecesOnBoard;
+    }
+
+    public Piece getPieceAt(int row, int col) {
+        if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE) {
+            return null;
+        }
+        return piecesOnBoard[row][col];
+    }
+
+    public void setPieceAt(int row, int col, Piece piece) {
+        if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
+            piecesOnBoard[row][col] = piece;
+        }
     }
 
     //returns the immutable copy of PieceBoard

@@ -1,21 +1,32 @@
 package org.portfolio.benttchessgame.piece;
 
-public abstract class Piece {
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
 
-    private final boolean color;
+public abstract sealed class Piece permits Bishop, King, Knight, Pawn, Queen, Rook {
+
+    private final PlayerColor color;
     private final String colorName;
-
-
     private String NAME = "";
 
-    private boolean WHITE = true;
-    private boolean DARK = false;
-
-
-    public Piece(boolean color)
+    public Piece(PlayerColor color)
     {
         this.color = color;
-        this.colorName = color == WHITE ? "white" : "dark";
+        this.colorName = color == PlayerColor.WHITE ? "white" : "dark";
+    }
+
+    public boolean isRook()
+    {
+        return false;
+    }
+
+    public boolean isPawn()
+    {
+        return false;
+    }
+
+    public boolean isKing()
+    {
+        return false;
     }
 
     public abstract int getBaseScore();
@@ -43,9 +54,9 @@ public abstract class Piece {
 
     public abstract int[][] getOffset();
 
-    public boolean getColor()
+    public PlayerColor getColor()
     {
-        return this.color;
+        return color;
     }
 
     @Override

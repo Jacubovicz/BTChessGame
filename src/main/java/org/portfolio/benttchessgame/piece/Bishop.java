@@ -1,11 +1,13 @@
 package org.portfolio.benttchessgame.piece;
 
-public class Bishop extends Piece {
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
+
+public final class Bishop extends Piece {
 
 
     private final int[][] offsets = {{1,1}, {1,-1}, {-1, 1}, {-1,-1}};
 
-    public Bishop(boolean color) {
+    public Bishop(PlayerColor color) {
 
         super(color);
         super.setName("bishop");

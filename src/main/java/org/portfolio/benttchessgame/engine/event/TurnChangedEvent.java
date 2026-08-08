@@ -1,3 +1,5 @@
 package org.portfolio.benttchessgame.engine.event;
 
-public record TurnChangedEvent(boolean isWhitePlayer) { }
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
+
+public record TurnChangedEvent(PlayerColor playerColor) { }

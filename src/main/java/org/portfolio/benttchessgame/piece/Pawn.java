@@ -1,8 +1,9 @@
 package org.portfolio.benttchessgame.piece;
 
-import org.portfolio.benttchessgame.engine.GameSession;
+import org.portfolio.benttchessgame.engine.GameState;
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
 
-public class Pawn extends Piece {
+public final class Pawn extends Piece {
 
     private int[][] offsetsStart = {{1,0},{2,0}};
     private int[][] offsets = {{1,0}};
@@ -14,14 +15,18 @@ public class Pawn extends Piece {
     // rank 7 is highest. When rank 7 -> pawn promotion (Queen, Rook, Bishop)
 
     private boolean firstMove = true;
-    private boolean isLocked = false;
-
     private boolean enpassantPossible = false;
     private int enpassantTurn;
 
-    public Pawn(boolean color) {
+    public Pawn(PlayerColor color) {
         super(color);
         super.setName("pawn");
+    }
+
+    @Override
+    public boolean isPawn()
+    {
+        return true;
     }
 
     @Override
@@ -29,7 +34,7 @@ public class Pawn extends Piece {
         return 10;
     }
 
-    public Pawn(boolean color, int vector)
+    public Pawn(PlayerColor color, int vector)
     {
         super(color);
         super.setName("pawn");
@@ -52,21 +57,15 @@ public class Pawn extends Piece {
 
 
 
-    public void setEnpassantPossible(GameSession currentGameSession)
+    public void setEnpassantPossible(GameState state)
     {
         this.enpassantPossible = true;
-        this.enpassantTurn = currentGameSession.getTurnCounter();
-
+        this.enpassantTurn = state.moveCounter();
     }
 
-    public void unlock()
+    public boolean isEnpassantPossible(GameState state)
     {
-        this.isLocked = false;
-    }
-
-    public boolean isEnpassantPossible(GameSession currentGameSession)
-    {
-        return currentGameSession.getTurnCounter() - this.enpassantTurn == 1;
+        return state.moveCounter() - this.enpassantTurn == 1;
     }
 
 
@@ -99,16 +98,6 @@ public class Pawn extends Piece {
     public void disableFirstMove()
     {
         this.firstMove = false;
-    }
-
-    public void setLocked()
-    {
-        this.isLocked = true;
-    }
-
-    public boolean isLocked()
-    {
-        return this.isLocked;
     }
 
     public boolean isFirstMove()

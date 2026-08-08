@@ -1,44 +1,39 @@
 package org.portfolio.benttchessgame.engine;
 
+import org.portfolio.benttchessgame.core.BoardSquare;
+import org.portfolio.benttchessgame.engine.configuration.GameConfiguration;
+import org.portfolio.benttchessgame.engine.configuration.TimeSettings;
+import org.portfolio.benttchessgame.engine.event.GameEventPublisher;
 import org.portfolio.benttchessgame.engine.exception.IllegalMoveException;
 import org.portfolio.benttchessgame.engine.player.Player;
 import org.portfolio.benttchessgame.piece.Piece;
 
 public class ChessEngine{
 
-    private GameSession gameSession;
+    private final GameEventPublisher eventPublisher;
     private GameBackend bridge;
 
-    public ChessEngine()
+    public ChessEngine(GameEventPublisher eventPublisher)
     {
-
+        this.eventPublisher = eventPublisher;
     }
 
-    public ChessEngine(GameBackend bridge)
+    public ChessEngine(GameBackend bridge, GameEventPublisher eventPublisher)
     {
-       // this.gameSession = new Session(new BasePlayer("Kuba"), new BasePlayer("Kinga"));
-     //   this.bridge = bridge;
-
-    //    bridge.initialize(gameSession);
+        this.bridge = bridge;
+        this.eventPublisher = eventPublisher;
     }
 
-    public void setSession(GameSession gameSession)
-    {
-        this.gameSession = gameSession;
-    }
 
-    public void setTheNewGame(Player p1, Player p2, boolean isOfflineGame)
+    public void setTheNewGame(GameConfiguration gameConfig)
     {
-        gameSession = new GameSession(p1, p2);
-
-        if(isOfflineGame)
+        switch(gameConfig.mode())
         {
-            bridge = new LocalGameBackend();
+            case GameMode.PvPOnline -> bridge = new OnlineGameBackend();
+            default -> bridge = new LocalGameBackend();
         }
-        else
-            bridge = new OnlineGameBackend();
 
-        bridge.initialize(gameSession, isOfflineGame);
+        bridge.initialize(gameConfig, eventPublisher);
     }
 
     public void proposeMove(int row, int col)

@@ -1,12 +1,14 @@
 package org.portfolio.benttchessgame.piece;
 
-public class Rook extends Piece {
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
+
+public final class Rook extends Piece {
 
     private boolean moved = false;
 
     private int[][] offsets = {{0,1}, {0,-1}, {-1,0}, {1,0}};
 
-    public Rook(boolean color) {
+    public Rook(PlayerColor color) {
         super(color);
         super.setName("rook");
     }
@@ -35,6 +37,12 @@ public class Rook extends Piece {
     public boolean didMove()
     {
         return moved;
+    }
+
+    @Override
+    public boolean isRook()
+    {
+        return true;
     }
 
 }

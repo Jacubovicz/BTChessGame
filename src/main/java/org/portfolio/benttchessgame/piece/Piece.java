@@ -4,14 +4,14 @@ import org.portfolio.benttchessgame.engine.player.PlayerColor;
 
 public abstract sealed class Piece permits Bishop, King, Knight, Pawn, Queen, Rook {
 
-    private final PlayerColor color;
+    protected final PlayerColor color;
     private final String colorName;
-    private String NAME = "";
+    private PieceType TYPE;
 
     public Piece(PlayerColor color)
     {
         this.color = color;
-        this.colorName = color == PlayerColor.WHITE ? "white" : "dark";
+        this.colorName = color == PlayerColor.WHITE ? "WHITE" : "DARK";
     }
 
     public boolean isRook()
@@ -31,14 +31,14 @@ public abstract sealed class Piece permits Bishop, King, Knight, Pawn, Queen, Ro
 
     public abstract int getBaseScore();
 
-    protected void setName(String name)
+    protected void setName(PieceType pieceType)
     {
-        this.NAME = name;
+        this.TYPE = pieceType;
     }
 
-    public String getName()
+    public PieceType getType()
     {
-        return this.NAME;
+        return this.TYPE;
     }
 
 
@@ -59,10 +59,12 @@ public abstract sealed class Piece permits Bishop, King, Knight, Pawn, Queen, Ro
         return color;
     }
 
+    public abstract Piece copy();
+
     @Override
     public String toString()
     {
-        return this.getColorName() + "_" + NAME;
+        return this.getColorName() + "_" + this.TYPE;
     }
 
 }

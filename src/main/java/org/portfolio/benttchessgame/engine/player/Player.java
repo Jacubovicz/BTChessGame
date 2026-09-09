@@ -3,7 +3,7 @@ package org.portfolio.benttchessgame.engine.player;
 public abstract class Player {
 
    private final String name;
-   private boolean color;
+   private PlayerColor playerColor;
    private String profileIconPath;
 
    public final boolean WHITE = true;
@@ -11,15 +11,15 @@ public abstract class Player {
 
    Player(String name) {
        this.name = name;
-       this.profileIconPath = "/images/default_player_icon.png";
+       this.profileIconPath = "/images/gameview/default_player_icon.png";
    }
 
-   public boolean getColor() {
-       return this.color;
+   public PlayerColor getColor() {
+       return this.playerColor;
    }
 
-   public void setColor(boolean color) {
-       this.color = color;
+   public void setColor(PlayerColor color) {
+       this.playerColor = color;
    }
 
    public String getName() {

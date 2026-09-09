@@ -29,12 +29,7 @@ public class OnlineGameBackend implements GameBackend {
     }
 
     @Override
-    public Piece[][] getSnapshot() {
-        return new Piece[0][];
-    }
-
-    @Override
-    public void fillTheStarterMoves() {
+    public void publishInitialState() {
 
     }
 }

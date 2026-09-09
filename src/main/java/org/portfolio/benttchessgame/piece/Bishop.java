@@ -10,7 +10,7 @@ public final class Bishop extends Piece {
     public Bishop(PlayerColor color) {
 
         super(color);
-        super.setName("bishop");
+        super.setName(PieceType.BISHOP);
     }
 
     @Override
@@ -29,5 +29,10 @@ public final class Bishop extends Piece {
     public int[][] getOffset()
     {
         return offsets;
+    }
+
+    @Override
+    public Piece copy() {
+        return new Bishop(this.color);
     }
 }

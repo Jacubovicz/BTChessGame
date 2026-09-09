@@ -14,9 +14,12 @@ public interface GameBackend {
 
     public void moveTheFigure(BoardSquare destBoardSquare) throws IllegalMoveException;
 
+    default void moveTheFigure(BoardSquare destBoardSquare, org.portfolio.benttchessgame.piece.PieceType promotionType) throws IllegalMoveException {
+        moveTheFigure(destBoardSquare);
+    }
+
     public void resetTheGame();
 
-    public Piece[][] getSnapshot();
 
-    public void fillTheStarterMoves();
+    public void publishInitialState();
 }

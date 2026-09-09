@@ -1,0 +1,3 @@
+black_figures_choice.png
+random_figures_choice.png
+white_figures_choice.png

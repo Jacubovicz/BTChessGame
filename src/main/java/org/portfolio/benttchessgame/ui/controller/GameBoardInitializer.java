@@ -76,7 +76,7 @@ public class GameBoardInitializer {
             return;
         }
         Image img = new Image(stream);
-        this.pieces.put(lineWithoutPNG, img);
+        this.pieces.put(lineWithoutPNG.toUpperCase(), img);
     }
 
     public Map<String, Image> getPieces()

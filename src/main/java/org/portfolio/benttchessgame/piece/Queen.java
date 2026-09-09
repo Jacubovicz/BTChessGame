@@ -9,7 +9,7 @@ public final class Queen extends Piece {
 
     public Queen(PlayerColor color) {
         super(color);
-        super.setName("queen");;
+        super.setName(PieceType.QUEEN);;
     }
 
     @Override
@@ -27,6 +27,11 @@ public final class Queen extends Piece {
     @Override
     public int[][] getOffset() {
         return offsets;
+    }
+
+    @Override
+    public Piece copy() {
+        return new Queen(this.color);
     }
 
 }

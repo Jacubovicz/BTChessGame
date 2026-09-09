@@ -10,7 +10,7 @@ public final class Rook extends Piece {
 
     public Rook(PlayerColor color) {
         super(color);
-        super.setName("rook");
+        super.setName(PieceType.ROOK);
     }
 
     @Override
@@ -27,6 +27,13 @@ public final class Rook extends Piece {
     @Override
     public int[][] getOffset() {
         return offsets;
+    }
+
+    @Override
+    public Piece copy() {
+        Rook copy = new Rook(this.color);
+        if (this.moved) copy.setDidMove();
+        return copy;
     }
 
     public void setDidMove()

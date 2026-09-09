@@ -12,7 +12,7 @@ public final class Knight extends Piece {
 
     public Knight(PlayerColor color) {
         super(color);
-        super.setName("knight");
+        super.setName(PieceType.KNIGHT);
     }
 
     @Override
@@ -24,6 +24,11 @@ public final class Knight extends Piece {
     @Override
     public int[][] getOffset() {
         return offsets;
+    }
+
+    @Override
+    public Piece copy() {
+        return new Knight(this.color);
     }
 
 }

@@ -4,7 +4,7 @@ import org.portfolio.benttchessgame.core.BoardSquare;
 import org.portfolio.benttchessgame.engine.configuration.GameConfiguration;
 import org.portfolio.benttchessgame.engine.exception.IllegalMoveException;
 import org.portfolio.benttchessgame.engine.event.GameEventPublisher;
-import org.portfolio.benttchessgame.piece.Piece;
+import org.portfolio.benttchessgame.piece.PieceType;
 
 public class LocalGameBackend implements GameBackend {
 
@@ -17,11 +17,11 @@ public class LocalGameBackend implements GameBackend {
 
     @Override
     public void proposeMove(int row, int col) {
-
         if(localChessGame != null)
         {
             localChessGame.proposeMove(row, col);
         }
+        else throw new IllegalStateException("LocalChessGame is not initialized");
     }
 
     @Override
@@ -30,6 +30,16 @@ public class LocalGameBackend implements GameBackend {
         {
             localChessGame.move(destBoardSquare);
         }
+        else throw new IllegalStateException("LocalChessGame is not initialized");
+    }
+
+    @Override
+    public void moveTheFigure(BoardSquare destBoardSquare, PieceType promotionType) throws IllegalMoveException {
+        if(localChessGame != null)
+        {
+            localChessGame.move(destBoardSquare, promotionType);
+        }
+        else throw new IllegalStateException("LocalChessGame is not initialized");
     }
 
     @Override
@@ -38,22 +48,13 @@ public class LocalGameBackend implements GameBackend {
         {
             localChessGame.resetTheGame();
         }
+        else throw new IllegalStateException("LocalChessGame is not initialized");
     }
 
-    @Override
-    public Piece[][] getSnapshot()
-    {
-        if(localChessGame != null)
-        {
-            return localChessGame.getSnapshot();
-        }
-
-        return null;
-    }
 
     @Override
-    public void fillTheStarterMoves()
+    public void publishInitialState()
     {
-        localChessGame.fillTheStarterMoves();
+        localChessGame.publishInitialState();
     }
 }

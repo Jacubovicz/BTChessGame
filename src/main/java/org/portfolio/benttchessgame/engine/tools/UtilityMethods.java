@@ -13,7 +13,15 @@ public class UtilityMethods {
 
         for(int i = 0; i < sourceArray.length; i++)
         {
-            System.arraycopy(sourceArray[i], 0, newArray[i], 0, sourceArray[i].length);
+            for(int j = 0; j < sourceArray.length; j++)
+            {
+                if(sourceArray[i][j] != null)
+                {
+                    Piece oldReference = sourceArray[i][j];
+                    Piece newReference = oldReference.copy();
+                    newArray[i][j] = newReference;
+                }
+            }
         }
         return newArray;
     }

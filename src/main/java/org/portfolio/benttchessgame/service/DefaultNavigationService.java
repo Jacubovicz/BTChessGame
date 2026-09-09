@@ -6,14 +6,15 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.portfolio.benttchessgame.core.AppContext;
 import org.portfolio.benttchessgame.core.ViewLoader;
-import org.portfolio.benttchessgame.engine.GameMode;
 import org.portfolio.benttchessgame.engine.configuration.GameConfiguration;
-import org.portfolio.benttchessgame.engine.configuration.TimeSettings;
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
+import org.portfolio.benttchessgame.ui.controller.RevengeDecision;
+import org.portfolio.benttchessgame.ui.controller.GameOverViewController;
+import org.portfolio.benttchessgame.ui.controller.PvpPopUpWindowController;
 import org.portfolio.benttchessgame.ui.navigation.AppView;
 import org.portfolio.benttchessgame.ui.controller.GameBoardController;
 import org.portfolio.benttchessgame.engine.command.StartGameCommand;
 import org.portfolio.benttchessgame.engine.command.RequestFullInitialGameStateCommand;
-import org.portfolio.benttchessgame.engine.player.BasePlayer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +45,7 @@ public class DefaultNavigationService implements NavigationService {
     }
 
     @Override
-    public void loadBoardView() {
+    public void loadBoardView(GameConfiguration gameConfiguration) {
         showView(AppView.LOADING_VIEW);
 
         // Pre-load Board view if not already cached
@@ -60,14 +61,7 @@ public class DefaultNavigationService implements NavigationService {
             controller.setChessEngineRunner(appContext.getEngineWorker());
         }
 
-        // Initialize engine commands in the background
-        GameConfiguration config = new GameConfiguration(
-                new BasePlayer("Jakub"),
-                new BasePlayer("Kinga"),
-                GameMode.PvPOffline,
-                TimeSettings.casual()
-        );
-        appContext.getEngineWorker().post(new StartGameCommand(config));
+        appContext.getEngineWorker().post(new StartGameCommand(gameConfiguration));
         appContext.getEngineWorker().post(new RequestFullInitialGameStateCommand());
 
         // Wait a bit to show the loading animation, then switch to the board
@@ -75,6 +69,39 @@ public class DefaultNavigationService implements NavigationService {
         delay.setOnFinished(e -> showView(AppView.BOARD_VIEW));
         delay.play();
     }
+
+    public RevengeDecision loadGameOverView(String message, PlayerColor winnerColor, int totalMovePerformed, String winningPlayerName){
+        Object[] controllerOut = new Object[1];
+        Scene scene = viewLoader.loadScene(AppView.GAME_OVER_VIEW, controllerOut);
+        GameOverViewController controller = (GameOverViewController) controllerOut[0];
+
+        controller.setTheData(message, winnerColor, totalMovePerformed, winningPlayerName);
+
+        Stage dialog = new Stage();
+        dialog.setScene(scene);
+        dialog.initOwner(stage);
+        dialog.setFullScreen(true);
+
+        dialog.showAndWait();
+        return controller.getRevengeDecision(); //not implemented yet
+    }
+
+    @Override
+    public GameConfiguration loadPvpPopUp() {
+        Object[] controllerOut = new Object[1];
+        Scene scene = viewLoader.loadScene(AppView.PVP_POP_UP, controllerOut);
+        PvpPopUpWindowController controller = (PvpPopUpWindowController) controllerOut[0];
+
+        Stage dialog = new Stage();
+        dialog.setScene(scene);
+        dialog.initOwner(stage);
+        dialog.setFullScreen(true);
+
+        dialog.showAndWait();
+
+        return controller.getGameConfiguration();
+    }
+
 
     private void showView(AppView view) {
         if (!scenes.containsKey(view)) {
@@ -84,6 +111,7 @@ public class DefaultNavigationService implements NavigationService {
             controllers.put(view, controllerOut[0]);
         }
         stage.setScene(scenes.get(view));
+        stage.setFullScreen(true);
         stage.show();
     }
 

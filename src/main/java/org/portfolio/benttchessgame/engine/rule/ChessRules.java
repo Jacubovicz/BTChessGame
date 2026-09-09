@@ -20,13 +20,13 @@ public final class ChessRules {
     }
 
     /*** GOOD ***/
-    public static List<BoardSquare> applyRules(int row, int col, List<BoardSquare> potentialMoves, Piece[][] grid, GameState state)
+    public static List<BoardSquare> applyRules(int row, int col, List<BoardSquare> potentialMoves, ChessBoard snapshot, int activeTurn)
     {
         //create an instance of new list, in which only legalMoves are existant
         List<BoardSquare> legalMoves = new ArrayList<>(potentialMoves);
 
         //get object of the figure which is about to be moved.
-        Piece f = grid[row][col];
+        Piece f = snapshot.getPieceAt(row,col);
 
         //get objects of both left and right, it will be needed for calculation of enpassant
         Piece left=null,right=null;
@@ -35,31 +35,35 @@ public final class ChessRules {
         if(col > 0)
         {
             // assign leftSide to left variable
-            left = grid[row][col-1];
+            left = snapshot.getPieceAt(row, col-1);
         }
         if(col<7)
         {
             //assign right side to right variable
-            right = grid[row][col+1];
+            right = snapshot.getPieceAt(row, col+1);
         }
 
         // Use pattern matching in switch for cleaner rule application
         switch (f) {
-            case King k when !k.didMove() -> checkCastlings(k, row, col, grid, legalMoves);
+            case King k when !k.didMove() -> checkCastlings(k, row, col, snapshot, legalMoves);
             case Pawn p -> {
                 //if it isn't the first move of a pawn
                 if(!p.isFirstMove())
                 {
                     //if left side of a pawn before movement is also a pawn and is not of the same player, and fulfills rules for enpassant
-                    if(left != null && left.isPawn() && f.getColor() != left.getColor() && ((Pawn)left).isEnpassantPossible(state))
+                    if(left != null && left.isPawn() && f.getColor() != left.getColor() && ((Pawn)left).isEnpassantPossible(activeTurn))
                     {
-                        //add the cell representation of the figure movement for the enpassant
-                        legalMoves.add(new BoardSquare(row - ((Pawn)left).getVector(), col-1));
+                        if (MoveValidator.noCheckmateEnPassant(row, col, row + p.getVector(), col-1, row, col-1, snapshot)) {
+                            //add the cell representation of the figure movement for the enpassant
+                            legalMoves.add(new BoardSquare(row + p.getVector(), col-1));
+                        }
                     }
                     //if right side of a pawn before movement is also a pawn and is not of the same player, and fulfills rules for enpassant
-                    else if(right != null && right.isPawn() && f.getColor() != right.getColor() && ((Pawn)right).isEnpassantPossible(state))
+                    if(right != null && right.isPawn() && f.getColor() != right.getColor() && ((Pawn)right).isEnpassantPossible(activeTurn))
                     {
-                        legalMoves.add(new BoardSquare(row - ((Pawn)right).getVector(), col+1));
+                        if (MoveValidator.noCheckmateEnPassant(row, col, row + p.getVector(), col+1, row, col+1, snapshot)) {
+                            legalMoves.add(new BoardSquare(row + p.getVector(), col+1));
+                        }
                     }
                 }
 
@@ -71,10 +75,12 @@ public final class ChessRules {
 
                     if(MoveValidator.inBounds(row + rowOffset, col + colOffset))
                     {
-                        Piece target = grid[row + rowOffset][col + colOffset];
+                        Piece target = snapshot.getPieceAt(row+rowOffset, col + colOffset);
                         if(target != null && p.getColor() != target.getColor())
                         {
-                            legalMoves.add(new BoardSquare(row + rowOffset, col + colOffset));
+                            if (MoveValidator.noCheckmateOccurs(row, col, row + rowOffset, col + colOffset, snapshot)) {
+                                legalMoves.add(new BoardSquare(row + rowOffset, col + colOffset));
+                            }
                         }
                     }
                 }
@@ -86,13 +92,17 @@ public final class ChessRules {
     }
 
     /*** GOOD ***/
-    public static boolean isCheckmate(ChessBoard board, GameState gameState, PlayerColor playerColor) {
-        if (MoveValidator.doesGenerateCheckDangerForPlayer(board.getPiecesOnBoard(), playerColor)) {
+    public static boolean isCheckmate(GameState gameState, PlayerColor playerColor) {
+        ChessBoard board = gameState.board().getSnapshot();
+        if (MoveValidator.doesGenerateCheckDangerForPlayer(board, playerColor)) {
             for (int row = 0; row < 8; row++) {
                 for (int col = 0; col < 8; col++) {
-                    List<BoardSquare> legalMoves = MoveValidator.getLegalMovesOf(row, col, gameState, board);
-                    if (!legalMoves.isEmpty()) {
-                        return false;
+                    Piece piece = board.getPieceAt(row, col);
+                    if (piece != null && piece.getColor() == playerColor) {
+                        List<BoardSquare> legalMoves = MoveValidator.getLegalMovesOf(row, col, board, gameState.moveCounter());
+                        if (!legalMoves.isEmpty()) {
+                            return false;
+                        }
                     }
                 }
             }
@@ -101,9 +111,28 @@ public final class ChessRules {
         return false;
     }
 
+    public static boolean isStalemate(GameState gameState, PlayerColor playerColor) {
+        ChessBoard board = gameState.board().getSnapshot();
+        if (MoveValidator.doesGenerateCheckDangerForPlayer(board, playerColor)) {
+            return false;
+        }
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board.getPieceAt(row, col);
+                if (piece != null && piece.getColor() == playerColor) {
+                    List<BoardSquare> legalMoves = MoveValidator.getLegalMovesOf(row, col, board, gameState.moveCounter());
+                    if (!legalMoves.isEmpty()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
 
     /*** GOOD ***/
-      private static void checkCastlings(King k, int row, int col, Piece[][] grid, List<BoardSquare> legalMoves)
+      private static void checkCastlings(King k, int row, int col, ChessBoard snapshot, List<BoardSquare> legalMoves)
       {
           //initalize the starting indexes of a Rook (Rook can't move in order to castling be possible
           int[] columnIndexesOfRook = {0, 7};
@@ -111,38 +140,47 @@ public final class ChessRules {
           //go through every possible column where the Rook may be existent to fulfill the rule
           for(int columnOfARook : columnIndexesOfRook)
           {
-              //if the Rook is on position and didn't move
-              var r = grid[row][columnOfARook];
-              if(r.isRook() && !((Rook) r).didMove())
+              // if the Rook is on position and didn't move
+              var r = snapshot.getPieceAt(row, columnOfARook);
+              if(r != null && r.isRook() && r.getColor() == k.getColor() && !((Rook) r).didMove())
               {
-                  // if the cells inbetween the king and the rook are empty
-                  if(cellsAreEmptyBetween(row,col, columnOfARook,grid))
-                  {
-                      //choose which Rook based on QueenSideCastling or KingSideCastling
-                      var expression = col > columnOfARook ? col-2 : col+2;
+                  // if the King is not in check
+                  if (!MoveValidator.doesGenerateCheckDangerForPlayer(snapshot, k.getColor())) {
+                      // if the cells inbetween the king and the rook are empty
+                      if(cellsAreEmptyBetween(row,col, columnOfARook,snapshot))
+                      {
+                          // check if the squares king passes through are not attacked
+                          int direction = columnOfARook > col ? 1 : -1;
+                          if (!MoveValidator.isSquareAttackedByOpponent(snapshot, new BoardSquare(row, col + direction), k.getColor()) &&
+                              !MoveValidator.isSquareAttackedByOpponent(snapshot, new BoardSquare(row, col + 2 * direction), k.getColor())) {
+                              
+                              //choose which Rook based on QueenSideCastling or KingSideCastling
+                              var expression = col > columnOfARook ? col-2 : col+2;
 
-                      //add the field for castling to be possible
-                      legalMoves.add(new BoardSquare(row, expression, true));
+                              //add the field for castling to be possible
+                              legalMoves.add(new BoardSquare(row, expression, true));
+                          }
+                      }
                   }
               }
           }
       }
 
       /*** GOOD ***/
-    private static boolean cellsAreEmptyBetween(int row, int col, int rookCol, Piece[][] copyOfGrid)
+    private static boolean cellsAreEmptyBetween(int row, int col, int rookCol, ChessBoard snapshot)
     {
         if(col > rookCol)
         {
             for(int i = col-1; i > rookCol; i--)
             {
-                if((copyOfGrid[row][i]) != null) return false;
+                if(snapshot.getPieceAt(row,i) != null) return false;
             }
         }
         else
         {
             for(int i = col+1; i < rookCol; i++)
             {
-                if((copyOfGrid[row][i]) != null) return false;
+                if(snapshot.getPieceAt(row, i) != null) return false;
             }
         }
         return true;

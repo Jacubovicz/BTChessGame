@@ -13,7 +13,7 @@ public final class King extends Piece {
 
     public King(PlayerColor color) {
         super(color);
-        super.setName("king");
+        super.setName(PieceType.KING);
     }
 
     @Override
@@ -30,6 +30,13 @@ public final class King extends Piece {
     @Override
     public int[][] getOffset() {
         return offsets;
+    }
+
+    @Override
+    public Piece copy() {
+        King copy = new King(this.color);
+        if (this.moved) copy.setDidMove();
+        return copy;
     }
 
     public void setDidMove()

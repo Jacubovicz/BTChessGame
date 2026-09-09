@@ -1,6 +1,7 @@
 package org.portfolio.benttchessgame.engine;
 
 import org.portfolio.benttchessgame.core.BoardSquare;
+import org.portfolio.benttchessgame.engine.board.MoveResult;
 import org.portfolio.benttchessgame.engine.player.PlayerColor;
 import org.portfolio.benttchessgame.engine.configuration.GameConfiguration;
 import org.portfolio.benttchessgame.engine.event.*;
@@ -8,7 +9,12 @@ import org.portfolio.benttchessgame.engine.exception.IllegalMoveException;
 import org.portfolio.benttchessgame.engine.board.Move;
 import org.portfolio.benttchessgame.engine.board.ChessBoard;
 import org.portfolio.benttchessgame.engine.board.BoardManager;
-import org.portfolio.benttchessgame.piece.Piece;
+import org.portfolio.benttchessgame.engine.rule.ChessRules;
+import org.portfolio.benttchessgame.engine.time.TimeCounter;
+import org.portfolio.benttchessgame.engine.time.TimeEventPublisher;
+import org.portfolio.benttchessgame.engine.time.TimerData;
+
+import org.portfolio.benttchessgame.piece.PieceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,119 +23,168 @@ import java.util.List;
 public class ChessGame {
 
     private final BoardManager boardManager;
-    private final GameEventPublisher eventPublisher;
     private final GameConfiguration gameConfig;
-    private GameState gameState;
+    private final StateEventPublisher stateEventPublisher;
 
+    private GameState gameState;
     private BoardSquare initialSquare = null;
 
+    TimeCounter timeCounter;
+    private final TimerData timerData;
+
+    TimeEventPublisher timeEventPublisher;
+
     public ChessGame(GameConfiguration gameConfig, GameEventPublisher eventPublisher) {
-
+        //Player white, Player black, GameMode(online/ai/offline), TimeSettings(blitz/standard/etc)
         this.gameConfig = gameConfig;
-        this.eventPublisher = eventPublisher;
-        this.boardManager = new BoardManager(new ChessBoard(), eventPublisher);
 
-        gameState = new GameState(boardManager.getSnapshot(), 0, PlayerColor.WHITE, new ArrayList<>());
-        boardManager.setState(gameState);
+        this.stateEventPublisher = new StateEventPublisher(eventPublisher);
+        this.boardManager = new BoardManager();
+        ChessBoard initialChessBoard = new ChessBoard();
+        initialChessBoard.setupTheBoard();
 
-        activatePlayerSquares(gameState.nowMovingPlayer());
+        //ChessBoard actualBoard, int actualMoveCounter, PlayerColor currentPlayer, List<Move> moveHistory
+        this.gameState = new GameState(initialChessBoard, 0, PlayerColor.WHITE, new ArrayList<>());
+
+        timeEventPublisher = new TimeEventPublisher(eventPublisher);
+        this.timerData = new TimerData(gameState.nowMovingPlayer());
+        this.timeCounter = new TimeCounter(gameConfig.timeSettings(), timerData, this::processAndSendToUI);
     }
 
-    public void activatePlayerSquares(PlayerColor playerColor) {
-        //find the fields and flush it to the UIEngine.
-        if(boardManager != null)
-        {
-            List<BoardSquare> activeSquares = boardManager.getPositionSquaresOfThePlayer(playerColor);
-            flushActiveSquares(activeSquares);
-        }
-    }
 
-    public Piece[][] getSnapshot() {
-        return boardManager.getSnapshot().getPiecesOnBoard();
-    }
 
-    /** **/
-    public void fillTheStarterMoves() {
-        eventPublisher.publishEvent(new PlayersChangedEvent(gameConfig.whitePlayer(), gameConfig.blackPlayer()));
-        activatePlayerSquares(gameState.nowMovingPlayer());
-        notifyActivateMoves(gameState.nowMovingPlayer());
-        boardManager.notifyBoardChangedListeners();
-    }
-
-    /** **/
-    public void proposeMove(int row, int col)
-    {
+    public void proposeMove(int row, int col) {
         BoardSquare proposedBoardSquare = new BoardSquare(row, col);
 
+        if(boardManager.isEmptyFieldOrOppositePlayer(proposedBoardSquare, gameState))
+        {
+            initialSquare = null;
+            stateEventPublisher.publishClickedMovedAndAvlMovesChanged(proposedBoardSquare, List.of());
+            return;
+        }
         initialSquare = proposedBoardSquare;
-        List<BoardSquare> avlMovesFromSquare = boardManager.proposeMoves(proposedBoardSquare, gameState); //adds all possible moves of this cell to an array.
-        notifyPaintClickedMovedEvent(proposedBoardSquare);
-        notifyAvlMovesChangedListeners(avlMovesFromSquare);
+        List<BoardSquare> avlMovesFromSquare = boardManager.getValidMoves(proposedBoardSquare, gameState);
+        stateEventPublisher.publishClickedMovedAndAvlMovesChanged(proposedBoardSquare, avlMovesFromSquare);
     }
 
-    //The owner of MoveOperation should by assigned at JavaFX level or AI level(if playing with pc)
-    public void move(BoardSquare destBoardSquare) throws IllegalMoveException
-    {
+    public void move(BoardSquare destBoardSquare) throws IllegalMoveException {
+        move(destBoardSquare, null);
+    }
+
+    public void move(BoardSquare destBoardSquare, PieceType promotionType) throws IllegalMoveException {
         if (initialSquare == null) {
             throw new IllegalMoveException("No piece selected for movement.");
         }
 
-        List<BoardSquare> avlMoves = boardManager.proposeMoves(initialSquare, gameState);
-
-        if(avlMoves.contains(destBoardSquare))
-        {
-            Move operation = new Move(initialSquare, destBoardSquare);
-            boardManager.move(operation, gameState);
-            notifyPaintClickedMovedEvent(operation.getDestCell());
-            notifyAvlMovesChangedListeners(new ArrayList<>()); //create an implementation in GUI
-            initialSquare = null;
-
-            // Update state
-
-            PlayerColor nextTurn = gameState.nowMovingPlayer() == PlayerColor.WHITE ? PlayerColor.DARK : PlayerColor.WHITE;
-            int nextCounter = gameState.moveCounter() + 1;
-            ArrayList<Move> nextHistory = new ArrayList<>(gameState.moveHistory());
-            nextHistory.add(operation);
-
-            this.gameState = new GameState(boardManager.getSnapshot(), nextCounter, nextTurn, nextHistory);
-            boardManager.setState(gameState);
+        Move operation = new Move(initialSquare, destBoardSquare, promotionType);
+        MoveResult moveResult; //newState, Move move, boolean check, boolean checkmate, Optional<BoardSquare> checkedBoardSquare
+        try {
+            moveResult = boardManager.move(operation, gameState);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalMoveException(e.getMessage());
         }
-        else
-            throw new IllegalMoveException("The outcome of the method is not expected. ");
+        stateEventPublisher.publishClickedMovedAndAvlMovesChanged(operation.getDestCell(), new ArrayList<>());
+        initialSquare = null;
 
-        activatePlayerSquares(gameState.nowMovingPlayer());
-        notifyActivateMoves(gameState.nowMovingPlayer()); //notifies the method responsible for updating the activate fields.
-    }
-
-    /** **/
-    public void notifyAvlMovesChangedListeners(List<BoardSquare> avlMoves) {
-        List<BoardSquare> copy = new ArrayList<>();
-
-        for(BoardSquare boardSquare : avlMoves)
-        {
-            copy.add(new BoardSquare(boardSquare.getRow(), boardSquare.getCol(), boardSquare.isCastlingCell()));
+        this.gameState = moveResult.newState();
+        if (moveResult.checkmate()) {
+            timeCounter.stopTimer();
+            stateEventPublisher.notifyBoardChangedListeners(gameState.board());
+            if (moveResult.checkedBoardSquare().isPresent()) {
+                stateEventPublisher.publishKingCellAttackedEvent(moveResult.checkedBoardSquare().get());
+            }
+            throwTheEndGame(EndGameReason.CHECKMATE, gameState.nowMovingPlayer().opposite());
+            return;
         }
-        eventPublisher.publishEvent(new AvailableMovesChangedEvent(copy));
+
+        boolean stalemate = ChessRules.isStalemate(gameState, gameState.nowMovingPlayer());
+        if (stalemate) {
+            timeCounter.stopTimer();
+            stateEventPublisher.notifyBoardChangedListeners(gameState.board());
+            throwTheEndGame(EndGameReason.STALEMATE, null);
+            return;
+        }
+
+        timeCounter.changeTurn();
+        flushMoveResultData(moveResult);
     }
 
-    //this one is to wake up the change of active fields on the game object,
-    public void notifyActivateMoves(PlayerColor playerToBeActivated)
+    private void flushMoveResultData(MoveResult moveResult)
     {
-        eventPublisher.publishEvent(new TurnChangedEvent(playerToBeActivated));
+        stateEventPublisher.flushMoveResultData(moveResult, activatePlayerSquares(gameState.nowMovingPlayer()));
+    }
+
+    public void publishInitialState() {
+        stateEventPublisher.publishInitialState(gameConfig.whitePlayer(), gameConfig.blackPlayer(), activatePlayerSquares(PlayerColor.WHITE), gameState.nowMovingPlayer(), gameState.board(), gameConfig.timeSettings());
+        timeCounter.startGame();
+    }
+
+    private List<BoardSquare> activatePlayerSquares(PlayerColor playerColor) {
+
+        if(boardManager != null)
+        {
+            ChessBoard snapshotBoard = gameState.board().getSnapshot();
+            return boardManager.getPositionSquaresOfThePlayer(snapshotBoard, playerColor);
+        }
+        return new ArrayList<>();
     }
 
 
-    //sends info to GUI to reactivate opponent's fields and block the ones of current player.
-    public void flushActiveSquares(List<BoardSquare> squares)
-    {
-        eventPublisher.publishEvent(new ActiveSquaresChangedEvent(squares));
+    private void processAndSendToUI(){
+        if(timerData == null){
+            return;
+        }
+        if(timerData.timeRanOut()){
+            timeCounter.stopTimer();
+            throwTheEndGame(EndGameReason.TIME_RUN_OUT, timerData.currentPlayer().opposite()); //currentPlayer os the one lost
+            timeEventPublisher.publishTimeRunOut(timerData.currentPlayer());
+            //Still needs implementation of game behavior
+            return;
+        }
+
+        timeEventPublisher.publishTimeEvent(timerData.currentPlayer(), timerData.timeLeft());
     }
 
-    //sends info to GUI that it needs to paint the cell as clicked or moved (both yellow color)
-    public void notifyPaintClickedMovedEvent(BoardSquare boardSquare)
-    {
-        eventPublisher.publishEvent(new MoveHighlightChangedEvent(boardSquare));
+    public void throwTheEndGame(EndGameReason endGameReason, PlayerColor winningPlayer){
+        String message = "";
+        switch(endGameReason)
+        {
+            case TIME_RUN_OUT -> {
+                message = "%s's has run out of time, \n\t%s's won!".formatted(winningPlayer.opposite(), winningPlayer);
+                String winningPlayerName = gameConfig.whitePlayer().getColor() == winningPlayer ? gameConfig.whitePlayer().getName() : gameConfig.blackPlayer().getName();
+                stateEventPublisher.publishEndGame(message, winningPlayer, gameState.moveCounter(), winningPlayerName);
+            }
+            case CHECKMATE -> {
+                message = "%s's king has been checkmated, \n\t%s's won!".formatted(winningPlayer.opposite(), winningPlayer);
+                String winningPlayerName = gameConfig.whitePlayer().getColor() == winningPlayer ? gameConfig.whitePlayer().getName() : gameConfig.blackPlayer().getName();
+                stateEventPublisher.publishEndGame(message, winningPlayer, gameState.moveCounter(), winningPlayerName);
+            }
+            case STALEMATE -> {
+                message = "Game drawn by stalemate!";
+                stateEventPublisher.publishEndGame(message, null, gameState.moveCounter(), "None");
+            }
+            default -> throw new RuntimeException("Invalid end game reason");
+        }
     }
 
-    public void resetTheGame(){}
+    public void resetTheGame(){
+        timeCounter.stopTimer();
+        ChessBoard initialChessBoard = new ChessBoard();
+        initialChessBoard.setupTheBoard();
+        this.gameState = new GameState(initialChessBoard, 0, PlayerColor.WHITE, new ArrayList<>());
+        this.initialSquare = null;
+        publishInitialState();
+    }
+
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    public PlayerColor getNowMovingPlayer() {
+        return gameState.nowMovingPlayer();
+    }
+
+    public int getMoveCounter() {
+        return gameState.moveCounter();
+    }
 }

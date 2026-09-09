@@ -165,6 +165,11 @@ public class BoardPainter {
        clickableFields.clear();
    }
 
+   public void paintKingAttacked(BoardSquare boardSquare)
+   {
+       gameBoard[boardSquare.getRow()][boardSquare.getCol()].setStyle("-fx-border-color: red; -fx-border-width:5px");
+   }
+
    public void paintClickedOrMoved(BoardSquare boardSquare) {
 
        if(clickedMovedBuffer.size() == 2)

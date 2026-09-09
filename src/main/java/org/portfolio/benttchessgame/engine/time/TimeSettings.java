@@ -1,4 +1,4 @@
-package org.portfolio.benttchessgame.engine.configuration;
+package org.portfolio.benttchessgame.engine.time;
 
 //delayMillis is responsible for the delay before the game starts
 public record TimeSettings(long baseTimeMillis, long incrementMillis, long delayMillis, boolean isInfinite)
@@ -23,9 +23,13 @@ public record TimeSettings(long baseTimeMillis, long incrementMillis, long delay
         return new TimeSettings(0, 0, 0, true);
     }
 
-    public static TimeSettings custom(long baseTimeMillis, long incrementMillis, long delayMillis)
+    public static TimeSettings custom(long baseTimeMinutes, long incrementSeconds, long delayMillis)
     {
-        return new TimeSettings(baseTimeMillis, incrementMillis, delayMillis, false);
+        return new TimeSettings(baseTimeMinutes * 60_000, incrementSeconds * 1000, delayMillis, false);
+    }
+
+    public static TimeSettings infinite(){
+        return new TimeSettings(0, 0, 0, true);
     }
 
 }

@@ -6,6 +6,34 @@
     	-fx-background-position: center;
 }
 
+.text-field {
+	-fx-background-color: ff9644;
+}
+
+
+.label {
+	-fx-text-fill: ff9644;
+}
+
+#pvpSetUpBackground {
+	-fx-background-image: url("../images/dark.png");
+	-fx-background-size: cover;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-border-color: yellow;
+	-fx-background-radius: 30px;
+
+	-fx-border-radius: 30px;
+	-fx-border-width: 2px;
+
+}
+
+.combo-box {
+	-fx-background-color: ff9644;
+}
+
+
+
 #playerBoard {
     -fx-border-color: yellow;
     -fx-border-radius: 10px;
@@ -41,13 +69,94 @@
 	-fx-border-color: #FF9644;
 }
 
+#whiteFiguresButton {
+	-fx-background-image: url("../images/popup/not_focused_white_figures.png");
+	-fx-background-size: cover;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+
+	-fx-background-color: transparent;
+}
+
+#whiteFiguresButton:hover {
+	-fx-background-image: url("../images/popup/focused_white_figures.png");
+}
+
+#whiteFiguresButton:focused {
+	-fx-background-image: url("../images/popup/chosen_white_figures.png");
+}
+
+#randomFiguresButton {
+	-fx-background-image: url("../images/popup/not_focused_random_figures.png");
+	-fx-background-size: cover;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+
+	-fx-background-color: transparent;
+}
+
+#randomFiguresButton:hover {
+	-fx-background-image: url("../images/popup/focused_random_figures.png");
+}
+
+#randomFiguresButton:focused {
+	-fx-background-image: url("../images/popup/chosen_random_figures.png");
+}
+
+#blackFiguresButton {
+	-fx-background-image: url("../images/popup/not_focused_black_figures.png");
+	-fx-background-size: cover;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+
+	-fx-background-color: transparent;
+}
+
+#blackFiguresButton:hover {
+	-fx-background-image: url("../images/popup/focused_black_figures.png");
+}
+
+#blackFiguresButton:focused {
+	-fx-background-image: url("../images/popup/chosen_black_figures.png");
+}
 
 .button{
 	-fx-background-color: ff9644;
 	-fx-background-radius: 20px;
-	
 }
 
 .button:hover{
 	-fx-background-color: EBE134;
+}
+
+.button:pressed{
+	-fx-background-color: #948D11;
+}
+
+.button:selected{
+	-fx-background-color: #948D11;
+}
+
+.button:focused {
+	-fx-focus-color: transparent;
+	-fx-faint-focus-color: transparent;
+}
+
+.text-area {
+	-fx-background-color: transparent;
+	-fx-text-fill: ff9644;
+	-fx-text-alignment: center;
+
+}
+
+.text-area .scroll-pane{
+	-fx-background-color: transparent;
+}
+
+.text-area .scroll-pane .viewport {
+	-fx-background-color: transparent;
+}
+
+.text-area .content{
+	-fx-background-color: transparent;
 }

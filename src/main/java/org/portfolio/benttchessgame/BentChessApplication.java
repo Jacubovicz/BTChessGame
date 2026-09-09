@@ -3,6 +3,9 @@ package org.portfolio.benttchessgame;
 import org.portfolio.benttchessgame.core.AppLifecycle;
 import javafx.application.Application;
 import javafx.stage.Stage;
+import org.portfolio.benttchessgame.engine.player.PlayerColor;
+import org.portfolio.benttchessgame.piece.Pawn;
+import org.portfolio.benttchessgame.piece.PieceType;
 
 import java.io.IOException;
 
@@ -24,8 +27,8 @@ public class BentChessApplication extends Application {
         super.stop();
     }
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
 
-       launch();
+        launch();
     }
 }

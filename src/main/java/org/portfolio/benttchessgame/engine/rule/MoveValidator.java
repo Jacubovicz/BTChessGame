@@ -1,18 +1,15 @@
 package org.portfolio.benttchessgame.engine.rule;
 
-import org.portfolio.benttchessgame.core.AppContext;
+
 import org.portfolio.benttchessgame.core.BoardSquare;
-import org.portfolio.benttchessgame.engine.GameState;
 import org.portfolio.benttchessgame.engine.board.ChessBoard;
-import org.portfolio.benttchessgame.engine.event.KingCellAttackedEvent;
-import org.portfolio.benttchessgame.engine.eventbus.GameEventBus;
 import org.portfolio.benttchessgame.engine.player.PlayerColor;
-import org.portfolio.benttchessgame.engine.tools.UtilityMethods;
 import org.portfolio.benttchessgame.piece.Piece;
 import org.portfolio.benttchessgame.piece.Pawn;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 
 public final class MoveValidator {
@@ -20,42 +17,38 @@ public final class MoveValidator {
     private MoveValidator(){};
 
     /*** GOOD ***/
-    public static List<BoardSquare> getLegalMovesOf(int row, int col, GameState state, ChessBoard chessBoard)
-    {
-        Piece[][] figuresOnBoard = chessBoard.getSnapshot().getPiecesOnBoard();
-        Piece piece = figuresOnBoard[row][col];
+    public static List<BoardSquare> getLegalMovesOf(int row, int col, ChessBoard snapshot, int activeTurn) {
+        Piece piece = snapshot.getPieceAt(row,col);
 
         if(piece == null) return new ArrayList<>();
 
         ArrayList<BoardSquare> potentialMoves = new ArrayList<>();
 
         if (piece.isPawn()) {
-            addPawnForwardMoves(row, col, (Pawn) piece, chessBoard, potentialMoves);
+            addPawnForwardMoves(row, col, (Pawn) piece, snapshot, potentialMoves);
         } else {
-            for(int[] offset : piece.getOffset())
-            {
-                addMovesInDirection(row,col,offset[0], offset[1],piece, chessBoard, potentialMoves);
+            for(int[] offset : piece.getOffset()) {
+                addMovesInDirection(row,col,offset[0], offset[1],piece, snapshot, potentialMoves);
             }
         }
 
-        return ChessRules.applyRules(row, col, potentialMoves, figuresOnBoard, state);
+        return ChessRules.applyRules(row, col, potentialMoves, snapshot, activeTurn);
     }
 
     /*** GOOD ***/
-    private static void addPawnForwardMoves(int row, int col, Pawn p, ChessBoard chessBoard, ArrayList<BoardSquare> potentialMoves) {
-        int v = p.getVector();
+    private static void addPawnForwardMoves(int row, int col, Pawn pawn, ChessBoard snapshotBoard, ArrayList<BoardSquare> potentialMoves) {
+        int v = pawn.getVector();
+
         // One square forward
         if (inBounds(row + v, col)) {
-            if (chessBoard.getPieceAt(row + v, col) == null) {
-                if(noCheckmate(row, col, row + v, col, chessBoard))
-                {
+            if (snapshotBoard.getPieceAt(row + v, col) == null) {
+                if(noCheckmateOccurs(row, col, row + v, col, snapshotBoard)) {
                     potentialMoves.add(new BoardSquare(row + v, col));
                 }
                 // Two squares forward
-                if (p.isFirstMove() && inBounds(row + 2 * v, col)) {
-                    if (chessBoard.getPieceAt(row + 2 * v, col) == null) {
-                        if(noCheckmate(row, col, row + 2 * v, col, chessBoard))
-                        {
+                if (pawn.isFirstMove() && inBounds(row + 2 * v, col)) {
+                    if (snapshotBoard.getPieceAt(row + 2 * v, col) == null) {
+                        if(noCheckmateOccurs(row, col, row + 2 * v, col, snapshotBoard)) {
                             potentialMoves.add(new BoardSquare(row + 2 * v, col));
                         }
                     }
@@ -64,44 +57,73 @@ public final class MoveValidator {
         }
     }
 
-    /*** GOOD ***/
-    private static boolean noCheckmate(int row, int col, int potentialMoveRow, int potentialMoveCol, ChessBoard chessBoard)
-    {
-        Piece[][] pieces = chessBoard.getSnapshot().getPiecesOnBoard();
-        Piece p;
 
-        if(pieces[row][col] != null)
-        {
-            p = pieces[row][col];
-            pieces[row][col] = null;
-            pieces[potentialMoveRow][potentialMoveCol] = p;
+    public static boolean noCheckmateOccurs(int row, int col, int potentialMoveRow, int potentialMoveCol, ChessBoard chessBoard) {
+        Piece piece = chessBoard.getPieceAt(row, col);
 
-            return !doesGenerateCheckDangerForPlayer(pieces, p.getColor());
+        if(piece != null) {
+            Piece target = chessBoard.getPieceAt(potentialMoveRow, potentialMoveCol);
+            chessBoard.setPieceAt(row, col, null);
+            chessBoard.setPieceAt(potentialMoveRow, potentialMoveCol, piece);
+
+            boolean isSafe = !doesGenerateCheckDangerForPlayer(chessBoard, piece.getColor());
+
+            // Restore the board state
+            chessBoard.setPieceAt(row, col, piece);
+            chessBoard.setPieceAt(potentialMoveRow, potentialMoveCol, target);
+
+            return isSafe;
         }
-        else
-            throw new IllegalArgumentException("No piece at given position");
-
+        return true;
     }
 
     /*** GOOD ***/
-    public static boolean doesGenerateCheckDangerForPlayer(Piece[][] pieces, PlayerColor playerColor)
-    {
-        PlayerColor opponentColor = playerColor == PlayerColor.WHITE ? PlayerColor.DARK : PlayerColor.WHITE;
-        BoardSquare kingBoardSquare = getTheKingBoardSquare(pieces, playerColor);
+    public static boolean noCheckmateEnPassant(int row, int col, int toRow, int toCol, int captureRow, int captureCol, ChessBoard chessBoard) {
+        Piece piece = chessBoard.getPieceAt(row, col);
+        if(piece != null) {
+            Piece capturedPawn = chessBoard.getPieceAt(captureRow, captureCol);
+            chessBoard.setPieceAt(row, col, null);
+            chessBoard.setPieceAt(toRow, toCol, piece);
+            chessBoard.setPieceAt(captureRow, captureCol, null);
 
-        for(int row = 0; row < 8; row++)
-        {
-          for(int col = 0; col < 8; col++)
-          {
-              Piece piece = pieces[row][col];
-              if(piece != null && piece.getColor() == opponentColor)
-              {
-                  List<BoardSquare> rawMovesOfPiece = calculateRawMoves(pieces, new BoardSquare(row, col));
-                  for(BoardSquare move : rawMovesOfPiece)
-                  {
-                      if(move.equals(kingBoardSquare))
-                      {
-                          notifyKingCellAttacked(kingBoardSquare);
+            boolean isSafe = !doesGenerateCheckDangerForPlayer(chessBoard, piece.getColor());
+
+            // Restore the board state
+            chessBoard.setPieceAt(row, col, piece);
+            chessBoard.setPieceAt(toRow, toCol, null);
+            chessBoard.setPieceAt(captureRow, captureCol, capturedPawn);
+
+            return isSafe;
+        }
+        return true;
+    }
+
+    public static Optional<BoardSquare> getIfInCheck(ChessBoard chessBoard, PlayerColor player) {
+        if(doesGenerateCheckDangerForPlayer(chessBoard, player)){
+            return getTheKingBoardSquare(chessBoard, player);
+        }
+        return Optional.empty();
+    }
+
+    /*** GOOD ***/
+    public static boolean doesGenerateCheckDangerForPlayer(ChessBoard board, PlayerColor playerColor) {
+        Optional<BoardSquare> kingBoardSquare = getTheKingBoardSquare(board, playerColor);
+        if (kingBoardSquare.isEmpty()) return false;
+
+        return isSquareAttackedByOpponent(board, kingBoardSquare.get(), playerColor);
+    }
+
+    /*** GOOD ***/
+    public static boolean isSquareAttackedByOpponent(ChessBoard board, BoardSquare square, PlayerColor playerColor) {
+        PlayerColor opponentColor = playerColor.opposite();
+
+        for(int row = 0; row < 8; row++) {
+          for(int col = 0; col < 8; col++) {
+              Piece piece = board.getPieceAt(row,col);
+              if(piece != null && piece.getColor() == opponentColor) {
+                  List<BoardSquare> rawMovesOfPiece = getRawMoves(board, new BoardSquare(row, col));
+                  for(BoardSquare move : rawMovesOfPiece) {
+                      if(move.equals(square)) {
                           return true;
                       }
                   }
@@ -115,38 +137,29 @@ public final class MoveValidator {
     /*** GOOD ***/
     public static void addMovesInDirection(int row, int col, int rowOff, int colOff, Piece piece, ChessBoard chessBoard, ArrayList<BoardSquare> potentialMoves) {
 
-        //values after potential movement
-        int r = row + rowOff;
-        int c = col + colOff;
+        int potentialMoveRow = row + rowOff;
+        int potentialMoveCol = col + colOff;
 
-        while(r >= 0 && r < 8 && c >= 0 && c < 8)
-        {
-            Piece target = chessBoard.getPieceAt(r, c);
+        while(potentialMoveRow >= 0 && potentialMoveRow < 8 && potentialMoveCol >= 0 && potentialMoveCol < 8) {
+            Piece target = chessBoard.getPieceAt(potentialMoveRow, potentialMoveCol);
 
-            if(target == null)
-            {
-                if(noCheckmate(row, col, r, c, chessBoard))
-                {
-                    potentialMoves.add(new BoardSquare(r,c));
+            if(target == null) {
+                if(noCheckmateOccurs(row, col, potentialMoveRow, potentialMoveCol, chessBoard)) {
+                    potentialMoves.add(new BoardSquare(potentialMoveRow,potentialMoveCol));
                 }
 
-                if(!(piece.doesSlide()))
-                {
+                if(!(piece.doesSlide())) {
                     return;
                 }
             }
-            else
-            {
+            else {
                 // we check if the piece(to be moved) is an enemy of the target position piece
-                if(isEnemy(piece, target))
-                {
+                if(areEnemies(piece, target)) {
                     // if the both the pieces are enemies and piece to be moved is not a Pawn
-                    if(!piece.isPawn())
-                    {
+                    if(!piece.isPawn()) {
                         // we add the position of a target as possible move(green) or create a new list if is empty
-                        if(noCheckmate(row, col, r, c, chessBoard))
-                        {
-                            potentialMoves.add(new BoardSquare(r,c));
+                        if(noCheckmateOccurs(row, col, potentialMoveRow, potentialMoveCol, chessBoard)) {
+                            potentialMoves.add(new BoardSquare(potentialMoveRow,potentialMoveCol));
                         }
                     }
                 }
@@ -154,100 +167,84 @@ public final class MoveValidator {
                 return;
             }
             //increase the row and col of potential move with offsets for another iteration
-            r += rowOff;
-            c += colOff;
+            potentialMoveRow += rowOff;
+            potentialMoveCol += colOff;
         }
     }
 
     /*** GOOD ***/
-    public static List<BoardSquare> calculateRawMoves(Piece[][] snapshot, BoardSquare boardSquare)
-    {
-        ArrayList<BoardSquare> rawMovesOfABoardSquare = new ArrayList<>();
+    public static List<BoardSquare> getRawMoves(ChessBoard board, BoardSquare boardSquare) {
+        ArrayList<BoardSquare> rawPieceMoves = new ArrayList<>();
 
-        Piece[][] snapshotCopy = UtilityMethods.copyPieceArray(snapshot);
+        Piece piece = board.getPieceAt(boardSquare.getRow(), boardSquare.getCol());
+        if (piece == null) return rawPieceMoves;
 
-        for(int[] offsets : snapshotCopy[boardSquare.getRow()][boardSquare.getCol()].getOffset())
-        {
+        int[][] offsetsToUse = piece.isPawn() ? ((Pawn) piece).getBeatingOffset() : piece.getOffset();
 
+        for(int[] offsets : offsetsToUse) {
             int rowOffset = offsets[0];
             int colOffset = offsets[1];
 
             int localRow = boardSquare.getRow() + rowOffset;
             int localCol = boardSquare.getCol() + colOffset;
 
-            while(inBounds(localRow, localCol))
-            {
+            while(inBounds(localRow, localCol)) {
 
-                Piece target = snapshotCopy[localRow][localCol];
+                Piece target = board.getPieceAt(localRow, localCol);
 
                 //if the figure exists and is the enemy player
-                if(target != null && target.getColor() != snapshotCopy[boardSquare.getRow()][boardSquare.getCol()].getColor())
-                {
+                if(target != null && target.getColor() != board.getPieceAt(boardSquare.getRow(), boardSquare.getCol()).getColor()) {
                     //add the cell to moves array and break the loop, because we stop iterating while there is at least one hit.
-                    rawMovesOfABoardSquare.add(new BoardSquare(localRow, localCol));
+                    rawPieceMoves.add(new BoardSquare(localRow, localCol));
                     break;
                 }
                 // if there is not target, you can move here
-                else if(target == null)
-                {
-                    rawMovesOfABoardSquare.add(new BoardSquare(localRow, localCol));
+                else if(target == null) {
+                    rawPieceMoves.add(new BoardSquare(localRow, localCol));
                 }
                 // if the said figure doesn't slide, flush the list which was filled before.
-                if(!snapshot[boardSquare.getRow()][boardSquare.getCol()].doesSlide())
-                {
-                    return rawMovesOfABoardSquare;
+                if(!board.getPieceAt(boardSquare.getRow(), boardSquare.getCol()).doesSlide()) {
+                    break;
                 }
                 // if there is figure of the same color, flush the list.
-                if(target != null && target.getColor() == snapshot[boardSquare.getRow()][boardSquare.getCol()].getColor())
-                {
-                    return rawMovesOfABoardSquare;
+                if(target != null && target.getColor() == board.getPieceAt(boardSquare.getRow(), boardSquare.getCol()).getColor()) {
+                    break;
                 }
 
                 localRow += rowOffset;
                 localCol += colOffset;
             }
         }
-        return rawMovesOfABoardSquare;
+        return rawPieceMoves;
     }
 
 
     /*** GOOD ***/
-    public static BoardSquare getTheKingBoardSquare(Piece[][] snapshot, PlayerColor ofPlayer)
-    {
+    public static Optional<BoardSquare> getTheKingBoardSquare(ChessBoard board, PlayerColor ofPlayer) {
         //iterate through every possible figure on board
-        for(int row = 0; row < snapshot.length; row++)
-        {
-            for(int col = 0; col < snapshot[row].length; col++)
-            {
-                Piece piece = snapshot[row][col];
-                if(piece != null && piece.isKing() && piece.getColor() == ofPlayer)
-                {
-                    return new BoardSquare(row, col);
+        for(int row = 0; row < ChessBoard.GRID_SIZE; row++) {
+            for(int col = 0; col < ChessBoard.GRID_SIZE; col++) {
+                Piece piece = board.getPieceAt(row,col);
+                if(piece != null && piece.isKing() && piece.getColor() == ofPlayer) {
+
+                    return Optional.of(new BoardSquare(row, col));
                 }
             }
         }
         //if no king found, throw an exception because game shouldn't be on
 
-        throw new IllegalArgumentException("No king found for player " + ofPlayer);
+        return Optional.empty();
     }
 
-    /*** GOOD ***/
-    private static boolean isEnemy(Piece fig1, Piece fig2)
-    {
+    private static boolean areEnemies(Piece fig1, Piece fig2) {
         return fig2 != null && fig1.getColor() != fig2.getColor();
     }
 
-    /*** GOOD ***/
     public static boolean inBounds(int row, int col)
     {
         return row >= 0 && row < 8 && col >= 0 && col < 8;
     }
 
-    /*** GOOD ***/
-    private static void notifyKingCellAttacked(BoardSquare kingBoardSquare)
-    {
-        GameEventBus bus = AppContext.getAppContext().getEventBus();
-        bus.publishEvent(new KingCellAttackedEvent(kingBoardSquare));
-    }
+
 
 }

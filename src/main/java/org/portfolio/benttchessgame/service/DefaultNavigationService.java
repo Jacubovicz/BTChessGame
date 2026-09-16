@@ -6,17 +6,16 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.portfolio.benttchessgame.core.AppContext;
 import org.portfolio.benttchessgame.core.ViewLoader;
+import org.portfolio.benttchessgame.engine.board.Move;
 import org.portfolio.benttchessgame.engine.configuration.GameConfiguration;
 import org.portfolio.benttchessgame.engine.player.PlayerColor;
-import org.portfolio.benttchessgame.ui.controller.RevengeDecision;
-import org.portfolio.benttchessgame.ui.controller.GameOverViewController;
-import org.portfolio.benttchessgame.ui.controller.PvpPopUpWindowController;
+import org.portfolio.benttchessgame.ui.controller.*;
 import org.portfolio.benttchessgame.ui.navigation.AppView;
-import org.portfolio.benttchessgame.ui.controller.GameBoardController;
 import org.portfolio.benttchessgame.engine.command.StartGameCommand;
 import org.portfolio.benttchessgame.engine.command.RequestFullInitialGameStateCommand;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DefaultNavigationService implements NavigationService {
@@ -80,7 +79,7 @@ public class DefaultNavigationService implements NavigationService {
         Stage dialog = new Stage();
         dialog.setScene(scene);
         dialog.initOwner(stage);
-        dialog.setFullScreen(true);
+       // dialog.setFullScreen(true);
 
         dialog.showAndWait();
         return controller.getRevengeDecision(); //not implemented yet
@@ -95,11 +94,24 @@ public class DefaultNavigationService implements NavigationService {
         Stage dialog = new Stage();
         dialog.setScene(scene);
         dialog.initOwner(stage);
-        dialog.setFullScreen(true);
+      //  dialog.setFullScreen(true);
 
         dialog.showAndWait();
 
         return controller.getGameConfiguration();
+    }
+
+    @Override
+    public void loadReplayView(int totalAmountOfMoves) {
+        Object[] controllerOut = new Object[1];
+        Scene scene = viewLoader.loadScene(AppView.REPLAY_VIEW, controllerOut);
+        GameReplayController controller = (GameReplayController) controllerOut[0];
+
+
+        Stage dialog = new Stage();
+        dialog.setScene(scene);
+        dialog.initOwner(stage);
+        dialog.showAndWait();
     }
 
 
@@ -111,7 +123,7 @@ public class DefaultNavigationService implements NavigationService {
             controllers.put(view, controllerOut[0]);
         }
         stage.setScene(scenes.get(view));
-        stage.setFullScreen(true);
+        //stage.setFullScreen(true);
         stage.show();
     }
 

@@ -6,7 +6,8 @@ public enum AppView {
     LOADING_VIEW("/FXMLViews/LoadingView.fxml"),
     BOARD_VIEW("/FXMLViews/GameView.fxml"),
     PVP_POP_UP("/FXMLViews/PvpPopUpWindowView.fxml"),
-    GAME_OVER_VIEW("/FXMLViews/GameOverView.fxml");
+    GAME_OVER_VIEW("/FXMLViews/GameOverView.fxml"),
+    REPLAY_VIEW("/FXMLViews/GameReplayView.fxml");
 
     private final String fxmlPath;
 

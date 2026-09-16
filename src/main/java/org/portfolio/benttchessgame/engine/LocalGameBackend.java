@@ -57,4 +57,22 @@ public class LocalGameBackend implements GameBackend {
     {
         localChessGame.publishInitialState();
     }
+
+    @Override
+    public void requestFrame(int frameNumber) {
+        if(localChessGame != null && localChessGame.gameEnded())
+        {
+            localChessGame.requestFrame(frameNumber);
+        }
+        else throw new IllegalStateException("LocalChessGame is not initialized");
+    }
+
+    @Override
+    public void requestReplay(GameEventPublisher publisher){
+        if(localChessGame != null)
+        {
+            localChessGame.requestReplay(publisher);
+        }
+        else throw new IllegalStateException("LocalChessGame is not initialized");
+    }
 }

@@ -32,4 +32,14 @@ public class OnlineGameBackend implements GameBackend {
     public void publishInitialState() {
 
     }
+
+    @Override
+    public void requestFrame(int frameNumber) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void requestReplay(GameEventPublisher publisher) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

@@ -25,6 +25,7 @@ public class GameOverViewController {
     private NavigationService navigationService;
     private RevengeDecision revengeDecision;
 
+    private int totalMovePerformed;
 
     public void initialize(){
         replayTheMatchButton.setOnAction((event) -> replayTheMatchSequence());
@@ -43,10 +44,13 @@ public class GameOverViewController {
         winningPlayerNameField.setText(winningPlayerName);
         movesPerformedField.setText(String.valueOf(totalMovePerformed));
         resultInfoTextArea.setText(message);
+        this.totalMovePerformed = totalMovePerformed;
     }
 
-    public void replayTheMatchSequence(){;
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void replayTheMatchSequence(){
+        if(totalMovePerformed > 0){
+            navigationService.loadReplayView(totalMovePerformed);
+        }
     }
 
     public void startDefaultRevenge(){

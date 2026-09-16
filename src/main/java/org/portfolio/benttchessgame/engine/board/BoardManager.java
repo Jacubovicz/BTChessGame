@@ -108,13 +108,15 @@ public class BoardManager {
         return piece == null || piece.getColor() != gameState.nowMovingPlayer();
     }
 
-    public void rawMove(Move operation, ChessBoard snapshotBoard) {
+    public ChessBoard rawMove(Move operation, ChessBoard snapshotBoard) {
         BoardSquare from = operation.getInitCell();
         BoardSquare to = operation.getDestCell();
 
         Piece f = snapshotBoard.getPieceAt(from.getRow(), from.getCol());
         snapshotBoard.setPieceAt(from.getRow(), from.getCol(), null);
         snapshotBoard.setPieceAt(to.getRow(), to.getCol(), f);
+
+        return snapshotBoard;
     }
 
     public List<BoardSquare> getPositionSquaresOfThePlayer(ChessBoard snapshotBoard, PlayerColor playerColor) {

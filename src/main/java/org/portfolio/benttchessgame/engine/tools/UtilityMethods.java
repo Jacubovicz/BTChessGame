@@ -1,5 +1,6 @@
 package org.portfolio.benttchessgame.engine.tools;
 
+import org.portfolio.benttchessgame.engine.board.ChessBoard;
 import org.portfolio.benttchessgame.piece.Piece;
 
 public class UtilityMethods {
@@ -24,6 +25,17 @@ public class UtilityMethods {
             }
         }
         return newArray;
+    }
+
+    public static String[][] chessBoardToStringArray(ChessBoard chessBoard){
+        String[][] representation = new String[8][8];
+        for(int r = 0; r < representation.length; r++){
+            for(int c = 0; c < representation[r].length; c++){
+                Piece p = chessBoard.getPieceAt(r,c);
+                representation[r][c] = (p != null) ? p.toString() : null;
+            }
+        }
+        return representation;
     }
 
 }

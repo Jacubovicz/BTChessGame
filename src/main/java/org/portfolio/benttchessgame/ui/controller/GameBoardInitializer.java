@@ -13,74 +13,36 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class GameBoardInitializer {
+public class GameBoardInitializer extends AbstractBoardInitializer implements ClickableBoard{
 
-    private final int FIT_WIDTH = 60;
-    private final int FIT_HEIGHT = 60;
-    public Map<String, Image> pieces = new HashMap<>();
-    ObservableList<Node> list;
-    StackPane[][] gameBoard;
     GameBoardController gameBoardController;
 
     public GameBoardInitializer(ObservableList<Node> list, StackPane[][] gameBoard, GameBoardController gameBoardController)
     {
-        this.list = list;
-        this.gameBoard = gameBoard;
+        super.list = list;
+        super.gameBoard = gameBoard;
         this.gameBoardController = gameBoardController;
 
         mapTheBoard();
         preloadTheImages();
+        setBoardClickable();
     }
 
-    public void mapTheBoard()
-    {
+    @Override
+    public void setBoardClickable() {
         for(Node n : list)
         {
             if(!(n instanceof StackPane sp)) continue;
             Integer r = GridPane.getRowIndex(sp);
             Integer c = GridPane.getColumnIndex(sp);
 
-            ImageView imgView = new ImageView();
-            imgView.setFitWidth(FIT_WIDTH);
-            imgView.setFitHeight(FIT_HEIGHT);
-
-            sp.getChildren().add(imgView);
-
             int row = (r==null) ? 0 : r;
             int col = (c==null) ? 0 : c;
 
             sp.setOnMouseClicked(event -> gameBoardController.proposeMove(sp, row, col));
-             sp.setDisable(true);
+            sp.setDisable(true);
 
             gameBoard[row][col] = sp;
         }
-    }
-
-    private void preloadTheImages()
-    {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("/images/figures/figures_list.txt"))));
-        reader.lines().forEach(this::addImage);
-    }
-
-    //The one step of adding the value to the map of figures
-    private void addImage(String line)
-    {
-        String clean = line.replace("\uFEFF", "").trim();
-        String lineWithoutPNG = line.replace(".png", "").trim();
-        String path = "/images/figures/" + clean;
-
-        var stream = getClass().getResourceAsStream(path);
-
-        if (stream == null) {
-            System.out.println("Resource not found: " + path);
-            return;
-        }
-        Image img = new Image(stream);
-        this.pieces.put(lineWithoutPNG.toUpperCase(), img);
-    }
-
-    public Map<String, Image> getPieces()
-    {
-        return this.pieces;
     }
 }

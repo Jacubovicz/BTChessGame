@@ -3,13 +3,14 @@ package org.portfolio.benttchessgame.ui.view;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
+import org.portfolio.benttchessgame.ui.controller.AbstractBoardInitializer;
 import org.portfolio.benttchessgame.ui.controller.GameBoardInitializer;
 
 public class BoardRenderer {
     private final StackPane[][] gameBoard;
-    private final GameBoardInitializer initializer;
+    private final AbstractBoardInitializer initializer;
 
-    public BoardRenderer(StackPane[][] gameBoard, GameBoardInitializer initializer) {
+    public BoardRenderer(StackPane[][] gameBoard, AbstractBoardInitializer initializer) {
         this.gameBoard = gameBoard;
         this.initializer = initializer;
     }

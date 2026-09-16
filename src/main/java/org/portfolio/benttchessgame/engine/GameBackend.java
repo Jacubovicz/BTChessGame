@@ -22,4 +22,7 @@ public interface GameBackend {
 
 
     public void publishInitialState();
+
+    public void requestFrame(int frameNumber);
+    public void requestReplay(GameEventPublisher publisher);
 }

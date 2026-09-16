@@ -9,6 +9,8 @@ import org.portfolio.benttchessgame.engine.exception.IllegalMoveException;
 import org.portfolio.benttchessgame.engine.board.Move;
 import org.portfolio.benttchessgame.engine.board.ChessBoard;
 import org.portfolio.benttchessgame.engine.board.BoardManager;
+import org.portfolio.benttchessgame.engine.replay.ReplayCreator;
+import org.portfolio.benttchessgame.engine.replay.ReplayFrameSender;
 import org.portfolio.benttchessgame.engine.rule.ChessRules;
 import org.portfolio.benttchessgame.engine.time.TimeCounter;
 import org.portfolio.benttchessgame.engine.time.TimeEventPublisher;
@@ -34,8 +36,12 @@ public class ChessGame {
 
     TimeEventPublisher timeEventPublisher;
 
+    private boolean gameEnded;
+    private ReplayCreator replayCreator;
+
     public ChessGame(GameConfiguration gameConfig, GameEventPublisher eventPublisher) {
         //Player white, Player black, GameMode(online/ai/offline), TimeSettings(blitz/standard/etc)
+        this.gameEnded = false;
         this.gameConfig = gameConfig;
 
         this.stateEventPublisher = new StateEventPublisher(eventPublisher);
@@ -165,6 +171,7 @@ public class ChessGame {
             }
             default -> throw new RuntimeException("Invalid end game reason");
         }
+        setGameEnded();
     }
 
     public void resetTheGame(){
@@ -186,5 +193,25 @@ public class ChessGame {
 
     public int getMoveCounter() {
         return gameState.moveCounter();
+    }
+
+    private void setGameEnded(){
+        this.gameEnded = true;
+    }
+
+    public boolean gameEnded(){
+        return this.gameEnded;
+    }
+
+    public void requestReplay(GameEventPublisher publisher){
+        if(gameEnded()){
+            replayCreator = new ReplayCreator(gameState.moveHistory(), publisher);
+        }
+    }
+
+    public void requestFrame(int frameNumber){
+        if(replayCreator != null && gameEnded()){
+            replayCreator.requestFrame(frameNumber);
+        }
     }
 }

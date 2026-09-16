@@ -55,4 +55,20 @@ public class ChessEngine{
         else throw new IllegalStateException("Bridge is not initialized");
     }
 
+    public void requestFrame(int frameNumber){
+        if(bridge != null)
+        {
+            bridge.requestFrame(frameNumber);
+        }
+        else throw new IllegalStateException("Bridge is not initialized");
+    }
+
+    public void requestReplay(){
+        if(bridge != null)
+        {
+            bridge.requestReplay(eventPublisher);
+        }
+        else throw new IllegalStateException("Bridge is not initialized");
+    }
+
 }

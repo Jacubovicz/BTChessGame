@@ -240,6 +240,19 @@ public final class MoveValidator {
         return fig2 != null && fig1.getColor() != fig2.getColor();
     }
 
+    public static ArrayList<BoardSquare> getActiveSquares(ChessBoard board, PlayerColor playerColor){
+        ArrayList<BoardSquare> activeSquares = new ArrayList<>();
+        for(int r = 0; r < ChessBoard.GRID_SIZE; r++){
+            for(int c = 0; c < ChessBoard.GRID_SIZE; c++){
+                if(board.getPieceAt(r,c) != null && board.getPieceAt(r,c).getColor() == playerColor)
+                    activeSquares.add(new BoardSquare(r,c));
+            }
+        }
+
+        return activeSquares;
+    }
+
+
     public static boolean inBounds(int row, int col)
     {
         return row >= 0 && row < 8 && col >= 0 && col < 8;

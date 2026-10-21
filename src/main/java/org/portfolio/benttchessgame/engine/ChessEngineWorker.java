@@ -2,6 +2,8 @@ package org.portfolio.benttchessgame.engine;
 
 
 import org.portfolio.benttchessgame.engine.command.GameCommand;
+import org.portfolio.benttchessgame.engine.exception.IllegalMoveException;
+
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -37,6 +39,8 @@ public class ChessEngineWorker implements Runnable {
                    }
                } catch (InterruptedException e) {
                    Thread.currentThread().interrupt();
+               } catch (IllegalMoveException e) {
+                   throw new RuntimeException(e);
                }
     }
 }

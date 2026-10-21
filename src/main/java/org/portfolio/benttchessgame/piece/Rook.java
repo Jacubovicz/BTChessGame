@@ -36,20 +36,22 @@ public final class Rook extends Piece {
         return copy;
     }
 
-    public void setDidMove()
-    {
+    public void setDidMove() {
         this.moved = true;
     }
 
-    public boolean didMove()
-    {
+    public boolean didMove() {
         return moved;
     }
 
     @Override
-    public boolean isRook()
-    {
+    public boolean isRook() {
         return true;
     }
+
+    public void setFirstMove(boolean firstMove) {
+        this.moved = firstMove;
+    }
+
 
 }

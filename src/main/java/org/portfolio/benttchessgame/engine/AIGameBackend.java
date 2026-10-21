@@ -1,32 +1,43 @@
 package org.portfolio.benttchessgame.engine;
 
 import org.portfolio.benttchessgame.core.BoardSquare;
+import org.portfolio.benttchessgame.engine.ai.AIEntity;
+import org.portfolio.benttchessgame.engine.ai.MoveTracker;
 import org.portfolio.benttchessgame.engine.board.ChessBoard;
+import org.portfolio.benttchessgame.engine.board.MoveResult;
 import org.portfolio.benttchessgame.engine.configuration.GameConfiguration;
 import org.portfolio.benttchessgame.engine.event.GameEventPublisher;
+import org.portfolio.benttchessgame.engine.event.StateEventPublisher;
 import org.portfolio.benttchessgame.engine.exception.IllegalMoveException;
-import org.portfolio.benttchessgame.engine.player.AIPlayer;
+import org.portfolio.benttchessgame.engine.player.Player;
 import org.portfolio.benttchessgame.engine.player.PlayerColor;
-import org.portfolio.benttchessgame.engine.rule.MoveEvaluator;
-import org.portfolio.benttchessgame.engine.rule.MoveValidator;
-import org.portfolio.benttchessgame.piece.Piece;
+import org.portfolio.benttchessgame.engine.replay.ChessBoardFrame;
+import org.portfolio.benttchessgame.engine.replay.ReplayFrameSender;
+import org.portfolio.benttchessgame.engine.replay.ReplayService;
+import org.portfolio.benttchessgame.engine.time.TimeEventPublisher;
 import org.portfolio.benttchessgame.piece.PieceType;
 
 import java.util.List;
 
-public class AIGameBackend implements GameBackend {
+public class AIGameBackend implements GameBackend, ChessGameListener, ReplayService {
 
     private ChessGame chessGame;
-    private PlayerColor aiColor;
+    private AIEntity aiEntity;
+    private StateEventPublisher stateEventPublisher;
+    private TimeEventPublisher timeEventPublisher;
+    private ReplayFrameSender replayFrameSender;
+    private MoveTracker moveTracker;
 
     @Override
     public void initialize(GameConfiguration gameConfig, GameEventPublisher eventPublisher) {
-        this.chessGame = new ChessGame(gameConfig, eventPublisher);
-        if (gameConfig.whitePlayer() instanceof AIPlayer) {
-            aiColor = PlayerColor.WHITE;
-        } else {
-            aiColor = PlayerColor.BLACK;
-        }
+        this.chessGame = new ChessGame(gameConfig, this);
+        this.aiEntity = new AIEntity(this);
+
+        this.stateEventPublisher = new StateEventPublisher(eventPublisher);
+        this.timeEventPublisher = new TimeEventPublisher(eventPublisher);
+        this.replayFrameSender = new ReplayFrameSender(eventPublisher);
+
+        this.moveTracker = new MoveTracker(gameConfig.whitePlayer(), gameConfig.blackPlayer(), aiEntity); //to add parameters
     }
 
     @Override
@@ -38,83 +49,32 @@ public class AIGameBackend implements GameBackend {
 
     @Override
     public void moveTheFigure(BoardSquare destBoardSquare) throws IllegalMoveException {
-        moveTheFigure(destBoardSquare, null);
+        if(chessGame != null){
+            moveTheFigure(destBoardSquare, null);
+        }
+        else throw new IllegalStateException("LocalChessGame is not initialized");
+
     }
 
     @Override
     public void moveTheFigure(BoardSquare destBoardSquare, PieceType promotionType) throws IllegalMoveException {
-        if (chessGame == null) {
-            throw new IllegalStateException("ChessGame is not initialized");
+        if(chessGame != null){
+            chessGame.move(destBoardSquare, promotionType);
         }
-        chessGame.move(destBoardSquare, promotionType);
-
-        if (chessGame.getNowMovingPlayer() == aiColor) {
-            makeAIMove();
-        }
-    }
-
-    private void makeAIMove() {
-        BoardSquare bestFrom = null;
-        BoardSquare bestTo = null;
-        int bestScore = aiColor == PlayerColor.WHITE ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-
-        ChessBoard board = chessGame.getGameState().board();
-        int turn = chessGame.getMoveCounter();
-
-        for (int r = 0; r < ChessBoard.GRID_SIZE; r++) {
-            for (int c = 0; c < ChessBoard.GRID_SIZE; c++) {
-                Piece p = board.getPieceAt(r, c);
-                if (p != null && p.getColor() == aiColor) {
-                    List<BoardSquare> legalMoves = MoveValidator.getLegalMovesOf(r, c, board, turn);
-                    for (BoardSquare dest : legalMoves) {
-                        ChessBoard testBoard = board.getSnapshot();
-                        Piece movingPiece = testBoard.getPieceAt(r, c);
-                        testBoard.setPieceAt(r, c, null);
-                        testBoard.setPieceAt(dest.getRow(), dest.getCol(), movingPiece);
-
-                        int score = MoveEvaluator.eval(testBoard);
-                        if (aiColor == PlayerColor.WHITE) {
-                            if (score > bestScore || bestFrom == null) {
-                                bestScore = score;
-                                bestFrom = new BoardSquare(r, c);
-                                bestTo = dest;
-                            }
-                        } else {
-                            if (score < bestScore || bestFrom == null) {
-                                bestScore = score;
-                                bestFrom = new BoardSquare(r, c);
-                                bestTo = dest;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (bestFrom != null && bestTo != null) {
-            try {
-                chessGame.proposeMove(bestFrom.getRow(), bestFrom.getCol());
-                chessGame.move(bestTo, PieceType.QUEEN);
-            } catch (IllegalMoveException e) {
-                System.err.println("AI failed to make move: " + e.getMessage());
-            }
-        }
+        else throw new IllegalStateException("LocalChessGame is not initialized");
     }
 
     @Override
-    public void resetTheGame() {
+    public void resetTheGame() throws IllegalMoveException {
         if (chessGame != null) {
             chessGame.resetTheGame();
         }
     }
 
     @Override
-    public void publishInitialState() {
+    public void requestInitialState() throws IllegalMoveException {
         if (chessGame != null) {
-            chessGame.publishInitialState();
-            if (chessGame.getNowMovingPlayer() == aiColor) {
-                makeAIMove();
-            }
+            chessGame.requestInitialState();
         }
     }
 
@@ -129,11 +89,83 @@ public class AIGameBackend implements GameBackend {
     }
 
     @Override
-    public void requestReplay(GameEventPublisher publisher) {
-        if(chessGame != null)
-        {
-            chessGame.requestReplay(publisher);
+    public void requestReplay() {
+        if(chessGame != null){
+            chessGame.requestReplay(this);
         }
-        else throw new IllegalStateException("LocalChessGame is not initialized");
+    }
+
+    @Override
+    public void publishClickedMovedAndAvlMovesChanged(BoardSquare proposedBoardSquare, List<BoardSquare> availableMoves) {
+        stateEventPublisher.publishClickedMovedChanged(proposedBoardSquare);
+        //stateEventPublisher.publishAvlMovesChanged(proposedBoardSquare, availableMoves);
+        moveTracker.publishAvlMovesChanged(() -> stateEventPublisher.publishAvlMovesChanged(availableMoves));
+    }
+
+    @Override
+    public void notifyBoardChangedListeners(ChessBoard chessBoard) {
+            stateEventPublisher.notifyBoardChangedListeners(chessBoard);
+            moveTracker.notifyBoardChangedListener(chessBoard); //here, the AIPlayer changes and should play
+    }
+
+    @Override
+    public void publishKingCellAttackedEvent(BoardSquare attackedKingCell) {
+            stateEventPublisher.publishKingCellAttackedEvent(attackedKingCell);
+    }
+
+    @Override
+    public void flushMoveResultData(MoveResult moveResult, List<BoardSquare> availableMoves) {
+        //the flushActiveSquare needs to be taken out from here
+        //to be separated to different methods
+
+            stateEventPublisher.flushMoveResultData(moveResult);
+            aiEntity.updateChessBoard(moveResult.newState().board());
+            moveTracker.setCurrentPlayer(moveResult.newState().nowMovingPlayer());
+           // stateEventPublisher.flushActiveSquares(availableMoves);
+            moveTracker.flushActiveSquares(() -> stateEventPublisher.flushActiveSquares(availableMoves));
+            moveTracker.setCurrentActiveTurn(moveResult.newState().turn());
+
+            //flushActiveSquares sends ActiveSquaresChangedEvent and is dependent on a player.
+            //notifyActivateMoves is independent of a player but important for trace
+    }
+
+
+    //the publishInitialState should already be filtered by the MoveTracker
+    @Override //this is coming out from the ChessGame object
+    public void publishInitialState(GameConfiguration gameConfig, List<BoardSquare> activeSquares, GameState gameState) throws IllegalMoveException {
+
+        PlayerColor nowMovingPlayer = gameState.nowMovingPlayer();
+        Player nowMoving = nowMovingPlayer == PlayerColor.WHITE ? gameConfig.whitePlayer() : gameConfig.blackPlayer();
+
+        aiEntity.updateChessBoard(gameState.board());
+        moveTracker.setCurrentPlayer(nowMoving);
+        moveTracker.setCurrentActiveTurn(gameState.turn());
+        stateEventPublisher.publishInitialState(gameConfig.whitePlayer(), gameConfig.blackPlayer(), gameState.nowMovingPlayer(), gameState.board(), gameConfig.timeSettings());
+        moveTracker.flushActiveSquares(() -> stateEventPublisher.flushActiveSquares(activeSquares));
+    }
+
+    @Override
+    public void publishEndGame(String message, PlayerColor winningPlayer, int moveCounter, String winningPlayerName) {
+            stateEventPublisher.publishEndGame(message, winningPlayer, moveCounter, winningPlayerName);
+    }
+
+    @Override
+    public void publishTimeRunOut(PlayerColor playerColor) {
+        timeEventPublisher.publishTimeRunOut(playerColor);
+    }
+
+    @Override
+    public void publishTimeEvent(PlayerColor playerColor, long timeLeft) {
+        timeEventPublisher.publishTimeEvent(playerColor, timeLeft);
+    }
+
+    @Override
+    public void sendFrameToUI(ChessBoardFrame frame) {
+        replayFrameSender.sendFrameToUI(frame);
+    }
+
+    @Override
+    public void notifyReplayReady(ChessBoard board, int numberOfFrames) {
+        replayFrameSender.notifyReplayReady(board, numberOfFrames);
     }
 }

@@ -1,5 +1,6 @@
 package org.portfolio.benttchessgame.engine.replay;
 
+import org.portfolio.benttchessgame.engine.ChessGameListener;
 import org.portfolio.benttchessgame.engine.board.BoardManager;
 import org.portfolio.benttchessgame.engine.board.ChessBoard;
 import org.portfolio.benttchessgame.engine.board.Move;
@@ -13,14 +14,13 @@ public class ReplayCreator {
 
     ArrayList<ChessBoardFrame> frames;
     BoardManager boardManager;
-    ReplayFrameSender frameSender;
+    ReplayService replayService;
 
-    public ReplayCreator(List<Move> moves, GameEventPublisher publisher) {
+    public ReplayCreator(List<Move> moves, ReplayService replayService) {
         frames = new ArrayList<>();
         this.boardManager = new BoardManager();
-        frameSender = new ReplayFrameSender(publisher);
+        this.replayService = replayService;
         createFrameList(moves);
-
     }
 
     private void createFrameList(List<Move> moves){
@@ -43,12 +43,10 @@ public class ReplayCreator {
     }
 
     private void sendFrameToUI(int frameNumber){
-        frameSender.sendFrameToUI(frames.get(frameNumber));
+        replayService.sendFrameToUI(frames.get(frameNumber));
     }
 
     private void notifyReplayReady(ChessBoard board, int numberOfFrames){
-        frameSender.notifyReplayReady(board, numberOfFrames);
+        replayService.notifyReplayReady(board, numberOfFrames);
     }
-
-
 }

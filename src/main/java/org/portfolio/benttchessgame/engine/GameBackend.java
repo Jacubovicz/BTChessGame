@@ -4,7 +4,6 @@ import org.portfolio.benttchessgame.core.BoardSquare;
 import org.portfolio.benttchessgame.engine.configuration.GameConfiguration;
 import org.portfolio.benttchessgame.engine.event.GameEventPublisher;
 import org.portfolio.benttchessgame.engine.exception.IllegalMoveException;
-import org.portfolio.benttchessgame.piece.Piece;
 
 public interface GameBackend {
 
@@ -18,11 +17,11 @@ public interface GameBackend {
         moveTheFigure(destBoardSquare);
     }
 
-    public void resetTheGame();
+    public void resetTheGame() throws IllegalMoveException;
 
 
-    public void publishInitialState();
+    public void requestInitialState() throws IllegalMoveException;
 
     public void requestFrame(int frameNumber);
-    public void requestReplay(GameEventPublisher publisher);
+    public void requestReplay();
 }

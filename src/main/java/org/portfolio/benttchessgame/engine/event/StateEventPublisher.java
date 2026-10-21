@@ -25,9 +25,13 @@ public class StateEventPublisher {
         notifyGameOverListener(message, winningPlayer, totalMovePerformed, winningPlayerName);
     }
 
-    public void publishClickedMovedAndAvlMovesChanged(BoardSquare boardSquare, List<BoardSquare> avlMoves) {
+    public void publishAvlMovesChanged(List<BoardSquare> avlMoves) {
+     //   notifyPaintClickedMovedEvent(boardSquare);
+        notifyAvlMovesChangedListeners(avlMoves); //this has to be taken out of this method to separate method
+    }
+
+    public void publishClickedMovedChanged(BoardSquare boardSquare){
         notifyPaintClickedMovedEvent(boardSquare);
-        notifyAvlMovesChangedListeners(avlMoves);
     }
 
     public void publishKingCellAttackedEvent(BoardSquare square) {
@@ -35,7 +39,7 @@ public class StateEventPublisher {
     }
 
     //This needs to be refactored. All decision should happen in the game engine, this is only the class for state change events
-    public void flushMoveResultData(MoveResult moveResult, List<BoardSquare> activeSquares){
+    public void flushMoveResultData(MoveResult moveResult){
         ChessBoard snapshot = moveResult.newState().board().getSnapshot();
         notifyBoardChangedListeners(snapshot);
         if(moveResult.check()){
@@ -44,13 +48,15 @@ public class StateEventPublisher {
             }
         }
         notifyActivateMoves(moveResult.newState().nowMovingPlayer());
-        flushActiveSquares(activeSquares);
+        //flushActiveSquares(activeSquares);
     }
 
-    public void publishInitialState(Player player1,Player player2, List<BoardSquare> activeSquares, PlayerColor nowMovingPlayer, ChessBoard chessBoard, TimeSettings timeSettings){
+
+
+    public void publishInitialState(Player player1,Player player2, PlayerColor nowMovingPlayer, ChessBoard chessBoard, TimeSettings timeSettings){
         notifyPlayersChangedListener(player1,player2);
-        flushActiveSquares(activeSquares);
-        notifyActivateMoves(nowMovingPlayer);
+        //flushActiveSquares(activeSquares); //dependent on a player
+        notifyActivateMoves(nowMovingPlayer); //independent but important
         notifyBoardChangedListeners(chessBoard);
         setTheTimeCounter(timeSettings);
     }
@@ -77,12 +83,12 @@ public class StateEventPublisher {
         eventPublisher.publishEvent(new KingCellAttackedEvent(attackedKing));
     }
 
-    private void notifyActivateMoves(PlayerColor playerColor)
+    private void notifyActivateMoves(PlayerColor playerColor) //not dependent on a player but important for trace
     {
         eventPublisher.publishEvent(new TurnChangedEvent(playerColor));
     }
 
-    private void flushActiveSquares(List<BoardSquare> squares)
+    public void flushActiveSquares(List<BoardSquare> squares) //dependent on type of player
     {
         eventPublisher.publishEvent(new ActiveSquaresChangedEvent(squares));
     }

@@ -48,4 +48,8 @@ public final class King extends Piece {
     {
         return this.moved;
     }
+
+    public void setDidMove(boolean didMove){
+        this.moved = didMove;
+    }
 }

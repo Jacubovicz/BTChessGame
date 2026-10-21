@@ -4,16 +4,15 @@ import org.portfolio.benttchessgame.core.BoardSquare;
 import org.portfolio.benttchessgame.engine.board.MoveResult;
 import org.portfolio.benttchessgame.engine.player.PlayerColor;
 import org.portfolio.benttchessgame.engine.configuration.GameConfiguration;
-import org.portfolio.benttchessgame.engine.event.*;
 import org.portfolio.benttchessgame.engine.exception.IllegalMoveException;
 import org.portfolio.benttchessgame.engine.board.Move;
 import org.portfolio.benttchessgame.engine.board.ChessBoard;
 import org.portfolio.benttchessgame.engine.board.BoardManager;
 import org.portfolio.benttchessgame.engine.replay.ReplayCreator;
-import org.portfolio.benttchessgame.engine.replay.ReplayFrameSender;
+import org.portfolio.benttchessgame.engine.replay.ReplayService;
 import org.portfolio.benttchessgame.engine.rule.ChessRules;
+import org.portfolio.benttchessgame.engine.rule.MoveValidator;
 import org.portfolio.benttchessgame.engine.time.TimeCounter;
-import org.portfolio.benttchessgame.engine.time.TimeEventPublisher;
 import org.portfolio.benttchessgame.engine.time.TimerData;
 
 import org.portfolio.benttchessgame.piece.PieceType;
@@ -26,7 +25,7 @@ public class ChessGame {
 
     private final BoardManager boardManager;
     private final GameConfiguration gameConfig;
-    private final StateEventPublisher stateEventPublisher;
+    private final ChessGameListener gameListener;
 
     private GameState gameState;
     private BoardSquare initialSquare = null;
@@ -34,17 +33,15 @@ public class ChessGame {
     TimeCounter timeCounter;
     private final TimerData timerData;
 
-    TimeEventPublisher timeEventPublisher;
-
     private boolean gameEnded;
     private ReplayCreator replayCreator;
 
-    public ChessGame(GameConfiguration gameConfig, GameEventPublisher eventPublisher) {
+    public ChessGame(GameConfiguration gameConfig, ChessGameListener gameListener) {
         //Player white, Player black, GameMode(online/ai/offline), TimeSettings(blitz/standard/etc)
-        this.gameEnded = false;
         this.gameConfig = gameConfig;
+        this.gameEnded = false;
 
-        this.stateEventPublisher = new StateEventPublisher(eventPublisher);
+        this.gameListener = gameListener;
         this.boardManager = new BoardManager();
         ChessBoard initialChessBoard = new ChessBoard();
         initialChessBoard.setupTheBoard();
@@ -52,12 +49,9 @@ public class ChessGame {
         //ChessBoard actualBoard, int actualMoveCounter, PlayerColor currentPlayer, List<Move> moveHistory
         this.gameState = new GameState(initialChessBoard, 0, PlayerColor.WHITE, new ArrayList<>());
 
-        timeEventPublisher = new TimeEventPublisher(eventPublisher);
         this.timerData = new TimerData(gameState.nowMovingPlayer());
         this.timeCounter = new TimeCounter(gameConfig.timeSettings(), timerData, this::processAndSendToUI);
     }
-
-
 
     public void proposeMove(int row, int col) {
         BoardSquare proposedBoardSquare = new BoardSquare(row, col);
@@ -65,12 +59,12 @@ public class ChessGame {
         if(boardManager.isEmptyFieldOrOppositePlayer(proposedBoardSquare, gameState))
         {
             initialSquare = null;
-            stateEventPublisher.publishClickedMovedAndAvlMovesChanged(proposedBoardSquare, List.of());
+            gameListener.publishClickedMovedAndAvlMovesChanged(proposedBoardSquare, List.of());
             return;
         }
         initialSquare = proposedBoardSquare;
         List<BoardSquare> avlMovesFromSquare = boardManager.getValidMoves(proposedBoardSquare, gameState);
-        stateEventPublisher.publishClickedMovedAndAvlMovesChanged(proposedBoardSquare, avlMovesFromSquare);
+        gameListener.publishClickedMovedAndAvlMovesChanged(proposedBoardSquare, avlMovesFromSquare);
     }
 
     public void move(BoardSquare destBoardSquare) throws IllegalMoveException {
@@ -89,15 +83,15 @@ public class ChessGame {
         } catch (IllegalArgumentException e) {
             throw new IllegalMoveException(e.getMessage());
         }
-        stateEventPublisher.publishClickedMovedAndAvlMovesChanged(operation.getDestCell(), new ArrayList<>());
+        gameListener.publishClickedMovedAndAvlMovesChanged(operation.getDestCell(), new ArrayList<>());
         initialSquare = null;
 
         this.gameState = moveResult.newState();
         if (moveResult.checkmate()) {
             timeCounter.stopTimer();
-            stateEventPublisher.notifyBoardChangedListeners(gameState.board());
+            gameListener.notifyBoardChangedListeners(gameState.board());
             if (moveResult.checkedBoardSquare().isPresent()) {
-                stateEventPublisher.publishKingCellAttackedEvent(moveResult.checkedBoardSquare().get());
+                gameListener.publishKingCellAttackedEvent(moveResult.checkedBoardSquare().get());
             }
             throwTheEndGame(EndGameReason.CHECKMATE, gameState.nowMovingPlayer().opposite());
             return;
@@ -106,7 +100,7 @@ public class ChessGame {
         boolean stalemate = ChessRules.isStalemate(gameState, gameState.nowMovingPlayer());
         if (stalemate) {
             timeCounter.stopTimer();
-            stateEventPublisher.notifyBoardChangedListeners(gameState.board());
+            gameListener.notifyBoardChangedListeners(gameState.board());
             throwTheEndGame(EndGameReason.STALEMATE, null);
             return;
         }
@@ -117,11 +111,11 @@ public class ChessGame {
 
     private void flushMoveResultData(MoveResult moveResult)
     {
-        stateEventPublisher.flushMoveResultData(moveResult, activatePlayerSquares(gameState.nowMovingPlayer()));
+        gameListener.flushMoveResultData(moveResult, activatePlayerSquares(gameState.nowMovingPlayer()));
     }
 
-    public void publishInitialState() {
-        stateEventPublisher.publishInitialState(gameConfig.whitePlayer(), gameConfig.blackPlayer(), activatePlayerSquares(PlayerColor.WHITE), gameState.nowMovingPlayer(), gameState.board(), gameConfig.timeSettings());
+    public void requestInitialState() throws IllegalMoveException {
+        gameListener.publishInitialState(gameConfig, activatePlayerSquares(gameState.nowMovingPlayer()), gameState);
         timeCounter.startGame();
     }
 
@@ -130,7 +124,8 @@ public class ChessGame {
         if(boardManager != null)
         {
             ChessBoard snapshotBoard = gameState.board().getSnapshot();
-            return boardManager.getPositionSquaresOfThePlayer(snapshotBoard, playerColor);
+            return MoveValidator.getActiveSquares(snapshotBoard, playerColor);
+         //  return boardManager.getPositionSquaresOfThePlayer(snapshotBoard, playerColor);
         }
         return new ArrayList<>();
     }
@@ -143,12 +138,11 @@ public class ChessGame {
         if(timerData.timeRanOut()){
             timeCounter.stopTimer();
             throwTheEndGame(EndGameReason.TIME_RUN_OUT, timerData.currentPlayer().opposite()); //currentPlayer os the one lost
-            timeEventPublisher.publishTimeRunOut(timerData.currentPlayer());
+            gameListener.publishTimeRunOut(timerData.currentPlayer());
             //Still needs implementation of game behavior
             return;
         }
-
-        timeEventPublisher.publishTimeEvent(timerData.currentPlayer(), timerData.timeLeft());
+        gameListener.publishTimeEvent(timerData.currentPlayer(), timerData.timeLeft());
     }
 
     public void throwTheEndGame(EndGameReason endGameReason, PlayerColor winningPlayer){
@@ -158,29 +152,29 @@ public class ChessGame {
             case TIME_RUN_OUT -> {
                 message = "%s's has run out of time, \n\t%s's won!".formatted(winningPlayer.opposite(), winningPlayer);
                 String winningPlayerName = gameConfig.whitePlayer().getColor() == winningPlayer ? gameConfig.whitePlayer().getName() : gameConfig.blackPlayer().getName();
-                stateEventPublisher.publishEndGame(message, winningPlayer, gameState.moveCounter(), winningPlayerName);
+                gameListener.publishEndGame(message, winningPlayer, gameState.moveCounter(), winningPlayerName);
             }
             case CHECKMATE -> {
                 message = "%s's king has been checkmated, \n\t%s's won!".formatted(winningPlayer.opposite(), winningPlayer);
                 String winningPlayerName = gameConfig.whitePlayer().getColor() == winningPlayer ? gameConfig.whitePlayer().getName() : gameConfig.blackPlayer().getName();
-                stateEventPublisher.publishEndGame(message, winningPlayer, gameState.moveCounter(), winningPlayerName);
+                gameListener.publishEndGame(message, winningPlayer, gameState.moveCounter(), winningPlayerName);
             }
             case STALEMATE -> {
                 message = "Game drawn by stalemate!";
-                stateEventPublisher.publishEndGame(message, null, gameState.moveCounter(), "None");
+                gameListener.publishEndGame(message, null, gameState.moveCounter(), "None");
             }
             default -> throw new RuntimeException("Invalid end game reason");
         }
         setGameEnded();
     }
 
-    public void resetTheGame(){
+    public void resetTheGame() throws IllegalMoveException {
         timeCounter.stopTimer();
         ChessBoard initialChessBoard = new ChessBoard();
         initialChessBoard.setupTheBoard();
         this.gameState = new GameState(initialChessBoard, 0, PlayerColor.WHITE, new ArrayList<>());
         this.initialSquare = null;
-        publishInitialState();
+        requestInitialState();
     }
 
     public GameState getGameState() {
@@ -203,9 +197,9 @@ public class ChessGame {
         return this.gameEnded;
     }
 
-    public void requestReplay(GameEventPublisher publisher){
+    public void requestReplay(ReplayService replayService){
         if(gameEnded()){
-            replayCreator = new ReplayCreator(gameState.moveHistory(), publisher);
+            replayCreator = new ReplayCreator(gameState.moveHistory(), replayService);
         }
     }
 

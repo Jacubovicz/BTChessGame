@@ -47,10 +47,10 @@ public class ChessEngine{
     }
 
 
-    public void publishInitialState() {
+    public void publishInitialState() throws IllegalMoveException {
         if(bridge != null)
         {
-            bridge.publishInitialState();
+            bridge.requestInitialState();
         }
         else throw new IllegalStateException("Bridge is not initialized");
     }
@@ -66,7 +66,7 @@ public class ChessEngine{
     public void requestReplay(){
         if(bridge != null)
         {
-            bridge.requestReplay(eventPublisher);
+            bridge.requestReplay();
         }
         else throw new IllegalStateException("Bridge is not initialized");
     }

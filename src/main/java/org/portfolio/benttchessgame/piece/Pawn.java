@@ -62,6 +62,9 @@ public final class Pawn extends Piece {
         return enpassantPossible && activeTurn - this.enpassantTurn == 1;
     }
 
+    public void setRank(int rank){
+        this.rank = rank;
+    }
 
     public void incTheRank()
     {
@@ -93,6 +96,10 @@ public final class Pawn extends Piece {
         newCopy.enpassantTurn = this.enpassantTurn;
 
         return newCopy;
+    }
+
+    public void setFirstMove(boolean firstMove){
+        this.firstMove = firstMove;
     }
 
     public int[][] getBeatingOffset()

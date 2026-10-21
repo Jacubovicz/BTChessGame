@@ -119,21 +119,6 @@ public class BoardManager {
         return snapshotBoard;
     }
 
-    public List<BoardSquare> getPositionSquaresOfThePlayer(ChessBoard snapshotBoard, PlayerColor playerColor) {
-        List<BoardSquare> positionBoardSquares = new ArrayList<>();
-
-        for(int row = 0; row < ChessBoard.GRID_SIZE; row++) {
-            for(int col = 0; col < ChessBoard.GRID_SIZE; col++)
-            {
-                if(snapshotBoard.getPieceAt(row,col) != null && snapshotBoard.getPieceAt(row,col).getColor() == playerColor)
-                {
-                    positionBoardSquares.add(new BoardSquare(row,col));
-                }
-            }
-        }
-        return positionBoardSquares;
-    }
-
     private void removePieceAt(BoardSquare boardSquare, ChessBoard snapshotBoard) {
         snapshotBoard.setPieceAt(boardSquare.getRow(), boardSquare.getCol(), null);
     }

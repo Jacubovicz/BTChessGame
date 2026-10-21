@@ -46,9 +46,9 @@ public class MainMenuController {
 
 
     public void startTheGameWithComputer() {
-        Player whitePlayer = new BasePlayer("Player");
+        Player whitePlayer = new AIPlayer("AIPlayer");
         whitePlayer.setColor(PlayerColor.WHITE);
-        Player blackPlayer = new AIPlayer("Computer");
+        Player blackPlayer = new AIPlayer("AIPlayer2");
         blackPlayer.setColor(PlayerColor.BLACK);
         GameConfiguration gameConfig = new GameConfiguration(
                 whitePlayer,

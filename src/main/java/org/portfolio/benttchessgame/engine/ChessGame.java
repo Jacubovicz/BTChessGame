@@ -31,9 +31,10 @@ public class ChessGame {
     private BoardSquare initialSquare = null;
 
     TimeCounter timeCounter;
-    private final TimerData timerData;
+    private TimerData timerData;
 
     private boolean gameEnded;
+    private boolean disposed;
     private ReplayCreator replayCreator;
 
     public ChessGame(GameConfiguration gameConfig, ChessGameListener gameListener) {
@@ -50,10 +51,11 @@ public class ChessGame {
         this.gameState = new GameState(initialChessBoard, 0, PlayerColor.WHITE, new ArrayList<>());
 
         this.timerData = new TimerData(gameState.nowMovingPlayer());
-        this.timeCounter = new TimeCounter(gameConfig.timeSettings(), timerData, this::processAndSendToUI);
+        this.timeCounter = new TimeCounter(gameConfig.timeSettings(), timerData, this::processAndSendToUI, this);
     }
 
-    public void proposeMove(int row, int col) {
+    public synchronized void proposeMove(int row, int col) {
+        if (gameEnded || disposed) return;
         BoardSquare proposedBoardSquare = new BoardSquare(row, col);
 
         if(boardManager.isEmptyFieldOrOppositePlayer(proposedBoardSquare, gameState))
@@ -71,7 +73,8 @@ public class ChessGame {
         move(destBoardSquare, null);
     }
 
-    public void move(BoardSquare destBoardSquare, PieceType promotionType) throws IllegalMoveException {
+    public synchronized void move(BoardSquare destBoardSquare, PieceType promotionType) throws IllegalMoveException {
+        if (gameEnded || disposed) throw new IllegalMoveException("Game is not active.");
         if (initialSquare == null) {
             throw new IllegalMoveException("No piece selected for movement.");
         }
@@ -114,7 +117,8 @@ public class ChessGame {
         gameListener.flushMoveResultData(moveResult, activatePlayerSquares(gameState.nowMovingPlayer()));
     }
 
-    public void requestInitialState() throws IllegalMoveException {
+    public synchronized void requestInitialState() throws IllegalMoveException {
+        if (gameEnded || disposed) return;
         gameListener.publishInitialState(gameConfig, activatePlayerSquares(gameState.nowMovingPlayer()), gameState);
         timeCounter.startGame();
     }
@@ -131,21 +135,25 @@ public class ChessGame {
     }
 
 
-    private void processAndSendToUI(){
-        if(timerData == null){
+    private synchronized void processAndSendToUI(){
+        if(disposed || gameEnded || timerData == null){
             return;
         }
         if(timerData.timeRanOut()){
             timeCounter.stopTimer();
             throwTheEndGame(EndGameReason.TIME_RUN_OUT, timerData.currentPlayer().opposite()); //currentPlayer os the one lost
-            gameListener.publishTimeRunOut(timerData.currentPlayer());
+            if (!disposed) gameListener.publishTimeRunOut(timerData.currentPlayer());
             //Still needs implementation of game behavior
             return;
         }
         gameListener.publishTimeEvent(timerData.currentPlayer(), timerData.timeLeft());
     }
 
-    public void throwTheEndGame(EndGameReason endGameReason, PlayerColor winningPlayer){
+    public synchronized void throwTheEndGame(EndGameReason endGameReason, PlayerColor winningPlayer){
+        if (gameEnded || disposed) return;
+        gameEnded = true;
+        initialSquare = null;
+        timeCounter.dispose();
         String message = "";
         switch(endGameReason)
         {
@@ -165,16 +173,33 @@ public class ChessGame {
             }
             default -> throw new RuntimeException("Invalid end game reason");
         }
-        setGameEnded();
     }
 
-    public void resetTheGame() throws IllegalMoveException {
-        timeCounter.stopTimer();
+    public synchronized void resetTheGame() throws IllegalMoveException {
+        if (disposed) return;
+        timeCounter.dispose();
         ChessBoard initialChessBoard = new ChessBoard();
         initialChessBoard.setupTheBoard();
         this.gameState = new GameState(initialChessBoard, 0, PlayerColor.WHITE, new ArrayList<>());
         this.initialSquare = null;
+        this.gameEnded = false;
+        this.replayCreator = null;
+        this.timerData = new TimerData(PlayerColor.WHITE);
+        this.timeCounter = new TimeCounter(gameConfig.timeSettings(), timerData, this::processAndSendToUI, this);
         requestInitialState();
+    }
+
+    public synchronized void dispose() {
+        if (disposed) return;
+        disposed = true;
+        initialSquare = null;
+        timeCounter.dispose();
+    }
+
+    public synchronized void applyAiMove(GameState expected, Move move) throws IllegalMoveException {
+        if (disposed || gameEnded || gameState != expected) return;
+        proposeMove(move.initBoardSquare().getRow(), move.initBoardSquare().getCol());
+        move(move.destBoardSquare(), move.promotionType());
     }
 
     public GameState getGameState() {
@@ -189,22 +214,19 @@ public class ChessGame {
         return gameState.moveCounter();
     }
 
-    private void setGameEnded(){
-        this.gameEnded = true;
-    }
 
-    public boolean gameEnded(){
+    public synchronized boolean gameEnded(){
         return this.gameEnded;
     }
 
-    public void requestReplay(ReplayService replayService){
-        if(gameEnded()){
+    public synchronized void requestReplay(ReplayService replayService){
+        if(!disposed && gameEnded()){
             replayCreator = new ReplayCreator(gameState.moveHistory(), replayService);
         }
     }
 
-    public void requestFrame(int frameNumber){
-        if(replayCreator != null && gameEnded()){
+    public synchronized void requestFrame(int frameNumber){
+        if(!disposed && replayCreator != null && gameEnded()){
             replayCreator.requestFrame(frameNumber);
         }
     }
